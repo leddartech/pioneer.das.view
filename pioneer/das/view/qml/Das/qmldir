@@ -1,0 +1,14 @@
+module Das
+
+CalibrationEditor   1.0 CalibrationEditor.qml
+CalibrationICP      1.0 CalibrationICP.qml
+MetadataEditor      1.0 MetadataEditor.qml
+DatasourceWindow    1.0 DatasourceWindow.qml
+ViewportWindow      1.0 ViewportWindow.qml
+RGBDatasourceWindow 1.0 RGBDatasourceWindow.qml
+ScalarsWindow       1.0 ScalarsWindow.qml
+TracesWindow        1.0 TracesWindow.qml
+Player              1.0 Player.qml
+LidarActor          1.0 LidarActor.qml
+PCLUI2D             1.0 PCLUI2D.qml
+AnnotationTab       1.0 AnnotationTab.qml
