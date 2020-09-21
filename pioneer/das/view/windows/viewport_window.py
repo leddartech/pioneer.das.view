@@ -1,4 +1,5 @@
 from pioneer.common import linalg, clouds
+from pioneer.common import platform as platform_utils
 from pioneer.common.gui import CustomActors, utils
 from pioneer.common.video import VideoRecorder, RecordableInterface
 from pioneer.das import categories
@@ -64,7 +65,7 @@ class ViewportWindow(Window, RecordableInterface):
         self.add_connection(self.controls.mapMemoryChanged.connect(self._update_voxel_map))
         self.add_connection(self.controls.voxelSizeChanged.connect(self._update_voxel_map))
 
-        sensor_type, pos, ds_type = platform.parse_datasource_name(self.ds_name)
+        sensor_type, pos, ds_type = platform_utils.parse_datasource_name(self.ds_name)
 
         if ds_type.startswith('ech'):
             lcax = self.platform[f'{sensor_type}_{pos}']
@@ -99,7 +100,7 @@ class ViewportWindow(Window, RecordableInterface):
 
     def _update_intervals(self):
 
-        sensor_type, pos, ds_type = platform.parse_datasource_name(self.ds_name)
+        sensor_type, pos, ds_type = platform_utils.parse_datasource_name(self.ds_name)
     
         lcax = self.platform[f'{sensor_type}_{pos}']
 
@@ -136,7 +137,7 @@ class ViewportWindow(Window, RecordableInterface):
 
     def _draw_frustrum(self):
         
-        _, _, ds_type = platform.parse_datasource_name(self.ds_name)
+        _, _, ds_type = platform_utils.parse_datasource_name(self.ds_name)
         
         self._ds_name_sample = self._get_sample(self.ds_name)
 
@@ -170,10 +171,10 @@ class ViewportWindow(Window, RecordableInterface):
 
             package = actor['packages']
             cloud =  actor['cloud']
-            sensor = self.platform.sensors[platform.extract_sensor_id(datasource)]
+            sensor = self.platform.sensors[platform_utils.extract_sensor_id(datasource)]
             sensor.extrinsics_dirty.connect(cloud.makeDirty)
             if datasource != self.ds_name:
-                ref_sensor = self.platform.sensors[platform.extract_sensor_id(self.ds_name)]
+                ref_sensor = self.platform.sensors[platform_utils.extract_sensor_id(self.ds_name)]
                 ref_sensor.extrinsics_dirty.connect(sensor.extrinsics_dirty)
 
             sample = self._get_sample(datasource)
@@ -197,7 +198,7 @@ class ViewportWindow(Window, RecordableInterface):
             package = actor['packages']
             cloud =  actor['cloud']
 
-            ds_name, pos, _ = platform.parse_datasource_name(datasource)
+            ds_name, pos, _ = platform_utils.parse_datasource_name(datasource)
 
             if f'{ds_name}_{pos}_ech' in self.viewport.pclActors:
                 pcl_ds = f'{ds_name}_{pos}_ech'
@@ -247,7 +248,7 @@ class ViewportWindow(Window, RecordableInterface):
 
             if np.abs(np.int64(self._ds_name_sample.timestamp) - sample.timestamp) <= 1e6:
 
-                _, _, ds_type = platform.parse_datasource_name(datasource)
+                _, _, ds_type = platform_utils.parse_datasource_name(datasource)
                 box_source = categories.get_source(ds_type)
 
                 raw = sample.raw
