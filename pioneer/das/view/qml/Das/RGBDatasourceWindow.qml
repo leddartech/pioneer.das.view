@@ -8,13 +8,14 @@ import Das 1.0
 DatasourceWindow {
     id: component
 
-    property alias controls: controls_
+    property alias controls      : controls_
     property alias viewports     : controls_.viewports
     property alias showActor     : controls_.showActor
     property alias bboxes2D      : controls_.bboxes2D
     property alias bboxes3D      : controls_.bboxes3D
     property alias seg2D         : controls_.seg2D
     property alias seg3D         : controls_.seg3D
+    property alias lanes         : controls_.lanes
 
     PCLUI2D {
         id: controls_
@@ -28,7 +29,6 @@ DatasourceWindow {
             for(var i in component.viewports) {
                 var vp = component.viewports[i]
                 m[vp] = {hasReferential: true} //until proven wrong
-    
             }
             return m;
         }

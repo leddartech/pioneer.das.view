@@ -14,6 +14,7 @@ ColumnLayout {
     property var seg2D: []
     property var bboxes3D: []
     property var seg3D: []
+    property var lanes: []
 
     property alias showIntervals        : intervals_.visible
     property alias distIntervals        : distIntervals_.defaultCursors;
@@ -39,14 +40,19 @@ ColumnLayout {
     property alias cropRight            : cropRight_.text
     property alias cropTop              : cropTop_.text
     property alias cropBottom           : cropBottom_.text
-    property alias mapMemory            : mapMemory_.value
+    property alias showVoxelMapSettings : voxelMapSettings_.visible
+    property alias voxelMapMemory       : voxelMapMemory_.text
+    property alias voxelMapSkip         : voxelMapSkip_.text
+    property alias submitVoxelMapMemory : submitVoxelMapMemory_
     property alias voxelSize            : voxelSize_.value
+    property alias voxelSizeText        : voxelSizeText_.text
 
     property var showActor  : Utils.makeVisibilityDict(component.viewports)
     property var showBBox2D : Utils.makeVisibilityDict(component.bboxes2D)
     property var showSeg2D  : Utils.makeVisibilityDict(component.seg2D)
     property var showBBox3D : Utils.makeVisibilityDict(component.bboxes3D)
     property var showSeg3D  : Utils.makeVisibilityDict(component.seg3D)
+    property var showLanes  : Utils.makeVisibilityDict(component.lanes)
     
     readonly property var dsColors   : Utils.makeColorsDict(viewports)
     readonly property var box2DColors: Utils.makeColorsDict(bboxes2D)
@@ -96,6 +102,13 @@ ColumnLayout {
             width: visible ? implicitWidth : 0
         }
         TabButton {
+            text: qsTr("lanes")
+            font.pointSize: 8
+            height: 15
+            visible: lanes.length > 0
+            width: visible ? implicitWidth : 0
+        }
+        TabButton {
             text: qsTr("settings")
             font.pointSize: 8
             height: 15
@@ -139,6 +152,11 @@ ColumnLayout {
             annotations: component.seg3D
             showAnnotations: component.showSeg3D
             notify: component.showSeg3DChanged
+        }
+        AnnotationTab {
+            annotations: component.lanes
+            showAnnotations: component.showLanes
+            notify: component.showLanesChanged
         }
         ColumnLayout {
             id: settings_
@@ -198,33 +216,7 @@ ColumnLayout {
                     to: 100
                     Layout.preferredWidth: 150
                 }
-                Text {
-                    Layout.alignment: Qt.AlignRight
-                    text: "memory: "
-                    font.pointSize: 8
-                }
-                Slider {
-                    id: mapMemory_
-                    Layout.alignment: Qt.AlignRight
-                    value: 10
-                    from: 1
-                    to: 200
-                    Layout.preferredWidth: 150
-                }
-                Text {
-                    Layout.alignment: Qt.AlignRight
-                    text: "voxel size: "
-                    font.pointSize: 8
-                }
-                Slider {
-                    id: voxelSize_
-                    Layout.alignment: Qt.AlignRight
-                    value: -1
-                    from: -2
-                    to: 0
-                    Layout.preferredWidth: 150
-                }
-
+                
                 RowLayout {
                     id: intervals_
                     visible: false //default value
@@ -251,6 +243,45 @@ ColumnLayout {
                         font.pointSize: 8
                         Layout.preferredHeight: 25
                     }
+                }
+            }
+
+            RowLayout {
+                id: voxelMapSettings_
+                Layout.maximumHeight: 25
+                visible: false
+                Text {text: 'Voxel map: nb frames'}
+                TextField {
+                    id: voxelMapMemory_
+                    text: '5'
+                    Layout.preferredWidth: 60
+                    Layout.preferredHeight: 25
+                }
+                Text {text: 'skip'}
+                TextField {
+                    id: voxelMapSkip_
+                    text: '1'
+                    Layout.preferredWidth: 60
+                    Layout.preferredHeight: 25
+                }
+                Button {
+                    id: submitVoxelMapMemory_
+                    text: "submit"
+                    Layout.preferredHeight: 25
+                    Layout.preferredWidth: 70
+                }
+                Text {text: 'voxel size: '}
+                Text {
+                    id: voxelSizeText_
+                    text: '0.00'
+                }
+                Slider {
+                    id: voxelSize_
+                    Layout.alignment: Qt.AlignRight
+                    from: -2
+                    value: -2
+                    to: 0
+                    Layout.preferredWidth: 150
                 }
             }
 

@@ -24,6 +24,7 @@ ApplicationWindow {
     property var seg2D            : []
     property var bboxes3D         : []
     property var seg3D            : []
+    property var lanes            : []
 
     property var sensors          : ({})
     property var datasources      : ({})
@@ -120,7 +121,8 @@ ApplicationWindow {
             bboxes2D: component.bboxes2D
             seg2D: component.seg2D
             bboxes3D: component.bboxes3D
-            seg3D: component.seg3D // no support for 3d segmentation in 2d view (yet?)
+            seg3D: component.seg3D
+            lanes: component.lanes
         }
     }
 
@@ -152,6 +154,7 @@ ApplicationWindow {
             viewports: component.viewports
             bboxes3D: component.bboxes3D
             seg3D: component.seg3D
+            lanes: component.lanes
         }
     }
 

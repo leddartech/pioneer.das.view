@@ -2,7 +2,7 @@ from pioneer.common import platform as platform_utils
 from pioneer.common.gui import interactive, CustomActors, utils
 from pioneer.common.gui.qml import backend_qtquick5
 from pioneer.das.api.platform import Platform
-from pioneer.das.api.datasources.virtual_datasources import FlirCylindricalProjection, LCAx_XYZIT_Synchronized, LCAx_XYZIT_traces_projection, Echoes_from_Traces, Traces_from_Echoes, PointPillars_XYZIT, VoxelMap
+from pioneer.das.api.datasources.virtual_datasources import FlirCylindricalProjection, LCAx_XYZIT_traces_projection, Echoes_from_Traces, VoxelMap
 from pioneer.das.view import QMLDIR
 from pioneer.das.view.windows import PlayerWindow, CalibWindow, MetadataWindow, ViewportWindow, ImagerWindow, TracesWindow, ScalarsWindow
 
@@ -13,10 +13,10 @@ import os
 import os.path
 
 DEFAULT_SYNC_LABELS = ['*ech*', '*_img*', '*_flimg*', '*_trr*', '*_trf*','*_ftrr*']
-DEFAULT_INTERP_LABELS = ['*_xyzit*', 'sbgekinox_*', 'peakcan_*', '*temp', '*_pos*', '*_agc*', '*_rad', '*_rpm']
+DEFAULT_INTERP_LABELS = ['*_xyzit*', 'sbgekinox_*', 'peakcan_*', '*temp', '*_pos*', '*_agc*', '*_rad', '*_rpm', '*_ago']
 
 DEFAULT_IGNORE_LABELS = ['radarTI_bfc']
-DEFAULT_TOLERANCE = 50e3 #2 ms
+DEFAULT_TOLERANCE = 2e3 #2 ms
 
 class DasCallback(utils.ContextCallback):
 
@@ -42,31 +42,21 @@ class Viewer(object):
             self.pf = Platform(dataset = path, include=include) if platform is None else platform
 
         self.synchronized = synchronized
+
         if not self.pf.is_live():
-            # Add virtual sources for mechanical lidar with points selected in leddar frame intervals
-            # LCAx_XYZIT_Synchronized.add_all_combinations_to_platform(self.pf)
-
-            # Add traces as projected 3d points
-            #LCAx_XYZIT_traces_projection.add_all_combinations_to_platform(self.pf)#, 'intrinsics')
-            # add leddar augmented data source
-
-            # Add virtual echoes from peak detector. Mandatory for trace viewer.
-            Echoes_from_Traces.add_all_combinations_to_platform(self.pf)
-
-            FlirCylindricalProjection.add_to_platform(self.pf)
-            if any(['seg2dimg-carla' in ds for ds in self.pf.datasource_names()]):
-                FlirCylindricalProjection.add_to_platform(self.pf, datatype='seg2dimg-carla')
-
-            VoxelMap.add_all_combinations_to_platform(self.pf)
-
-            sync_labels = DEFAULT_SYNC_LABELS
-            interp_labels = DEFAULT_INTERP_LABELS
 
             if add_sync is not None:
                 sync_labels += add_sync
 
             if self.synchronized is None:
-                self.synchronized = self.pf.synchronized(sync_labels=sync_labels, interp_labels=interp_labels, tolerance_us=DEFAULT_TOLERANCE)
+                if 'synchronization' in self.pf.yml:
+                    self.synchronized = self.pf.synchronized()
+                else:
+                    self.synchronized = self.pf.synchronized(
+                        sync_labels=DEFAULT_SYNC_LABELS, 
+                        interp_labels=DEFAULT_INTERP_LABELS, 
+                        tolerance_us=DEFAULT_TOLERANCE
+                    )
         else:
             self.synchronized = self.pf.synchronized([])
 
@@ -113,8 +103,9 @@ class Viewer(object):
         , seg2D = sorted(self.pf.expand_wildcards(['*_poly2d-*','*_seg2d-*','*_seg2dimg-*']))
         , bboxes3D = sorted(self.pf.expand_wildcards(['*_box3d*']))
         , seg3D = sorted(self.pf.expand_wildcards(['*_seg3d-*']))
+        , lanes = sorted(self.pf.expand_wildcards(['*_lane-*']))
         , viewports = sorted(self.pf.expand_wildcards(['*_ech*', '*_xyzit', '*xyzit-*', '*_rad']))
-        , scalars = sorted(self.pf.expand_wildcards(['sbgekinox_*', 'peakcan_*','encoder_*','carlagps_*', 'carlaimu_*']))
+        , scalars = sorted(self.pf.expand_wildcards(['sbgekinox_*', 'peakcan_*','encoder_*','mti_*','carlagps_*', 'carlaimu_*']))
         , traces = sorted(self.pf.expand_wildcards(['*_trr*', '*_trf*','*_ftrr*']))
         , sensors = self.sensors
         , datasources = self.datasources

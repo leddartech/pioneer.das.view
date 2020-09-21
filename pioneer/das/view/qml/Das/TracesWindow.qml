@@ -10,6 +10,10 @@ DatasourceWindow {
 
     ////// python API
     property var selection: []
+    property alias addToSelection : addToSelection_.text
+    property alias addToSelectionSubmit : addToSelectionSubmit_
+
+    property alias useVirtualEchoes : useVirtualEchoes_
     property var imageType : 'amplitude'
 
     property alias showRaw : showRaw_.checked
@@ -35,6 +39,23 @@ DatasourceWindow {
             onClicked: component.selection = []
         }
         Button {
+            id: addToSelectionSubmit_
+            text: 'Add to selection'
+        }
+        TextField {
+            id: addToSelection_
+            placeholderText: 'Channel'
+        }
+    }
+
+    RowLayout {
+        Button {
+            id: useVirtualEchoes_
+            visible: false
+            text: 'Use virtual echoes'
+            checkable: true
+        }
+        Button {
             text: "Amplitude"
             onClicked: imageType = 'amplitude'
         }
@@ -51,6 +72,7 @@ DatasourceWindow {
             onClicked: imageType = 'skew'
         }
     }
+
     RowLayout {
         SmallCheckBox {
             id: showRaw_

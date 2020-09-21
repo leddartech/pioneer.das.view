@@ -2,9 +2,9 @@ from pioneer.common import linalg
 from pioneer.common.platform import parse_datasource_name
 from pioneer.common.gui import utils
 from pioneer.common.video import VideoRecorder, RecordableInterface
-from pioneer.das import categories
+from pioneer.das import categories, lane_types
 from pioneer.das.api.platform import Platform
-from pioneer.das.api.samples import ImageFisheye, ImageCylinder
+from pioneer.das.api.samples import ImageFisheye, ImageCylinder, Echo
 from pioneer.das.api.sensors import Sensor
 from pioneer.das.api.datasources.virtual_datasources.voxel_map import VoxelMap
 from pioneer.das.view.windows import Window
@@ -19,6 +19,8 @@ import matplotlib
 import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
 import numpy as np
+
+
 
 
 class ImagerWindow(Window, RecordableInterface):
@@ -41,7 +43,12 @@ class ImagerWindow(Window, RecordableInterface):
         return np.fromstring(self.backend.tostring_rgb(), dtype='uint8').reshape(int(height),int(width),3)
 
     def connect(self):
-        self.add_connection(self.window.cursorChanged.connect(self.update))
+
+        if self.platform.is_live():
+            self.platform[self.datasource].ds.connect(self.update)    
+        else:
+            self.add_connection(self.window.cursorChanged.connect(self.update))
+        
         self.add_connection(self.window.visibleChanged.connect(self.update))
 
         controls = self.window.controls
@@ -58,6 +65,7 @@ class ImagerWindow(Window, RecordableInterface):
         self.add_connection(controls.showSeg2DChanged.connect(self.update))
         self.add_connection(controls.showBBox3DChanged.connect(self.update))
         self.add_connection(controls.showSeg3DChanged.connect(self.update))
+        self.add_connection(controls.showLanesChanged.connect(self.update))
         self.add_connection(controls.confThresholdChanged.connect(self.update))
         self.add_connection(controls.videoChanged.connect(self.update))
         self.add_connection(controls.categoryFilterChanged.connect(self.update))
@@ -66,7 +74,7 @@ class ImagerWindow(Window, RecordableInterface):
         self.add_connection(controls.cropRightChanged.connect(self.update_aspect_ratio))
         self.add_connection(controls.cropTopChanged.connect(self.update_aspect_ratio))
         self.add_connection(controls.cropBottomChanged.connect(self.update_aspect_ratio))
-        self.add_connection(controls.mapMemoryChanged.connect(self.update_voxel_map))
+        self.add_connection(controls.submitVoxelMapMemory.clicked.connect(self.update_voxel_map))
         self.add_connection(controls.voxelSizeChanged.connect(self.update_voxel_map))
 
         self.update()
@@ -77,7 +85,9 @@ class ImagerWindow(Window, RecordableInterface):
 
         self.__read_qml_properties()
 
-        sample = self.platform[self.datasource][self.cursor]
+        cursor = -1 if self.platform.is_live() else int(self.cursor)
+
+        sample = self.platform[self.datasource][cursor]
         if self.undistortimage:
             image = sample.undistort_image()
         else:
@@ -89,6 +99,7 @@ class ImagerWindow(Window, RecordableInterface):
         self.__update_box2D(sample, image, box)
         self.__update_seg_2d(sample, image)
         self.__update_bbox_3d(sample, image, box)
+        self.__update_lanes(sample, image)
 
         self.__draw(image)
         self.video_recorder.record(self.is_recording)
@@ -103,8 +114,11 @@ class ImagerWindow(Window, RecordableInterface):
         datasources = [ds_name for ds_name, show in dict(self.show_actor, **dict(self.show_seg_3d)).items() if show]
         for datasource in datasources:
             if isinstance(self.platform[datasource], VoxelMap):
-                self.platform[datasource].memory = int(self.window.controls.mapMemory)
+                self.platform[datasource].clear_cache()
+                self.platform[datasource].memory = int(self.window.controls.voxelMapMemory)
+                self.platform[datasource].skip = int(self.window.controls.voxelMapSkip)
                 self.platform[datasource].voxel_size = 10**float(self.window.controls.voxelSize)
+                self.window.controls.voxelSizeText = f'{self.platform[datasource].voxel_size:.2f}'
                 self.platform[datasource].invalidate_caches()
         self.update()
 
@@ -164,29 +178,24 @@ class ImagerWindow(Window, RecordableInterface):
             
             self.has_referential[datasource_name]['hasReferential'] = True
 
-            # keep only points in front of the camera:
-            azimut = np.arctan2(points[:,0], points[:,2])
-            # norm_xz = np.linalg.norm(points[:,[0,2]], axis = 1)
-            # elevation = np.arctan2(points[:,1], norm_xz)
-            fov = np.pi/4
-            if isinstance(sample, ImageCylinder) or isinstance(sample, ImageFisheye):
-                fov = np.pi/2
-            points_mask = np.abs(azimut) < fov
 
             if is_seg3D:
                 seg_sample = self.platform[output_ds_name].get_at_timestamp(cloud_sample.timestamp)
-                seg_colors = seg_sample.colors()
+                mode = 'quad_cloud' if isinstance(cloud_sample, Echo) else None
+                seg_colors = seg_sample.colors(mode=mode)
                 if seg_colors.shape[0] != points.shape[0]:
                     print(f'Warning. The length ({seg_colors.shape[0]}) of the segmentation 3D data' \
                             +f'does not match the length ({points.shape[0]}) of the point cloud.')
                     continue
 
-                if categoryFilter is not '':
-                    points_mask &= seg_sample.mask_category(categoryFilter)
-
-                pts2d = sample.project_pts(points, points_mask, self.undistortimage)
+                pts2d, points_mask = sample.project_pts(points, mask_fov=False, output_mask=True, undistorted=self.undistortimage)
                 all_points2D[output_ds_name] = pts2d
                 all_colors[output_ds_name] = seg_colors
+
+                if self.category_filter is not '':
+                    points_mask &= seg_sample.mask_category(self.category_filter)
+                
+
             else:   
                 a_min, a_max = amplitudes.min(), amplitudes.max()
                 if self.log_scale:
@@ -194,7 +203,7 @@ class ImagerWindow(Window, RecordableInterface):
                 else:
                     norm = matplotlib.colors.Normalize(amplitudes.min(), amplitudes.max())
             
-                pts2d = sample.project_pts(points, points_mask, self.undistortimage)
+                pts2d, points_mask = sample.project_pts(points, mask_fov=False, output_mask=True, undistorted=self.undistortimage)
                 all_points2D[output_ds_name] = pts2d
                 
                 if self.use_colors:
@@ -204,15 +213,9 @@ class ImagerWindow(Window, RecordableInterface):
                 else:
                     all_colors[output_ds_name] = norm(amplitudes)
 
-            pixel_clip = 50
-            points_mask &= ( 
-                (all_points2D[output_ds_name][..., 0] < (image.shape[1] + pixel_clip)) & 
-                (all_points2D[output_ds_name][..., 0] > -pixel_clip) & 
-                (all_points2D[output_ds_name][..., 1] < (image.shape[0] + pixel_clip)) & 
-                (all_points2D[output_ds_name][..., 1] > -pixel_clip)
-            )
-
             all_indices[output_ds_name] = self.__filter_indices(points_mask, indices)
+
+
 
         self.window.hasReferential = self.has_referential
         self.__clean_plot_canvas()
@@ -340,6 +343,38 @@ class ImagerWindow(Window, RecordableInterface):
                             txt.set_path_effects([PathEffects.withStroke(linewidth=1, foreground='k')])
 
 
+    def __update_lanes(self, sample, image):
+
+        # Remove all previous lines
+        [p.remove() for p in reversed(self.ax.lines)]
+
+        datasources = [ds_name for ds_name, show in self.show_lanes.items() if show]
+        for ds_name in datasources:
+            lane_sample = self.platform[ds_name].get_at_timestamp(sample.timestamp)
+
+            for lane in lane_sample.raw:
+
+                vertices = lane_sample.transform(lane['vertices'], self.datasource, ignore_orientation=True)
+                projected_lane = sample.project_pts(vertices, undistorted=self.undistortimage, mask_fov=True) 
+                
+                infos = lane_types.LANE_TYPES[lane['type']]
+
+                color = np.array(infos['color'])/255
+
+                width = 5
+                offset = width if infos['double'] else 0
+                nb_lanes = 2 if infos['double'] else 1
+
+                for n in range(nb_lanes):
+
+                    ddashed = infos['dashed'][n] if infos['double'] else infos['dashed']
+                    ls = '--' if ddashed else '-'
+                    
+                    self.ax.plot(projected_lane[:,0]-offset, projected_lane[:,1], c=color, lw=width, ls=ls)
+
+                    offset *= -1
+
+
     def __clean_plot_canvas(self):
         #TODO: Extract to function
                 # if using colors, set_array does not work, it expects a 1D array, probably indexing an hidden color map
@@ -400,6 +435,7 @@ class ImagerWindow(Window, RecordableInterface):
         self.show_seg_2d           =        controls.showSeg2D
         self.show_bbox_3d          =        controls.showBBox3D
         self.show_seg_3d           =        controls.showSeg3D
+        self.show_lanes            =        controls.showLanes
         self.conf_threshold        = int(   controls.confThreshold)/100.0
         self.undistort             = bool(  controls.undistort)
         self.undistortimage        = bool(  controls.undistortimage)

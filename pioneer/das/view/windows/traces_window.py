@@ -1,7 +1,7 @@
 from pioneer.common import platform as platform_utils
 from pioneer.common.trace_processing import TraceProcessingCollection, Smooth, Clip, ZeroBaseline, Realign, RemoveStaticNoise, Desaturate
-from pioneer.das.api.platform import Platform
-from pioneer.das.api.samples import FastTrace
+from pioneer.common import clouds
+from pioneer.das.api.samples import FastTrace, Echo
 from pioneer.das.view.windows import Window
 
 from pioneer.common.gui.qml import backend_qtquick5
@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 COLORS = plt.cm.rainbow(np.linspace(0,1,20))
+
+
 
 class TracesWindow(Window):
 
@@ -29,6 +31,15 @@ class TracesWindow(Window):
         self.figure = self.backend.getFigure()
         self.ax = [self.figure.add_subplot(s) for s in [211, 212]]
         self.datasource = self.platform[self.ds_name]
+
+        sensor_name, sensor_pos, trr_ds_type = platform_utils.parse_datasource_name(self.ds_name)
+        self.ech_ds_name = f'{sensor_name}_{sensor_pos}_ech'
+        self.has_echoes = self.ech_ds_name in self.platform.datasource_names()
+        self.virtual_ech_ds_name = f'{sensor_name}_{sensor_pos}_ech-{trr_ds_type}'
+        self.has_virtual_echoes = self.virtual_ech_ds_name in self.platform.datasource_names()
+        if self.has_virtual_echoes:
+            self.window.useVirtualEchoes.visible = True
+
         self.helper = None
         self.image = None
         self.hover_coords = None
@@ -44,6 +55,8 @@ class TracesWindow(Window):
     def connect(self):
         self.add_connection(self.window.cursorChanged.connect(self._update))
         self.add_connection(self.window.selectionChanged.connect(self._update))
+        self.add_connection(self.window.addToSelectionSubmit.clicked.connect(self._add_to_selection))
+        self.add_connection(self.window.useVirtualEchoes.clicked.connect(self._update))
         self.add_connection(self.window.imageTypeChanged.connect(self._update))
         self.add_connection(self.window.showRawChanged.connect(self._update))
         self.add_connection(self.window.showHighFastTraceChanged.connect(self._update))
@@ -84,18 +97,21 @@ class TracesWindow(Window):
 
     def _update_image(self):
 
-        sensor_type, position, trr_ds_type = platform_utils.parse_datasource_name(self.ds_name)
-        echo_ds_name = f"{sensor_type}_{position}_ech-{trr_ds_type}"
-        echo_sample = self.platform[echo_ds_name].get_at_timestamp(self.trace_sample.timestamp)
+        if self.window.useVirtualEchoes.checked:
+            self.echo_sample = self.platform[self.virtual_ech_ds_name].get_at_timestamp(self.trace_sample.timestamp)
+        elif self.has_echoes:
+            self.echo_sample = self.platform[self.ech_ds_name].get_at_timestamp(self.trace_sample.timestamp)
+        else:
+            self.echo_sample = self._placeholder_echo_sample()
 
         if self.window.imageType == 'distance':
-            image = echo_sample.distance_img(options='max_amplitude')
+            image = self.echo_sample.distance_img(options='max_amplitude')
         elif self.window.imageType == 'width':
-            image = echo_sample.other_field_img('widths')
+            image = self.echo_sample.other_field_img('widths')
         elif self.window.imageType == 'skew':
-            image = echo_sample.other_field_img('skews')
+            image = self.echo_sample.other_field_img('skews')
         else:
-            image = echo_sample.amplitude_img()
+            image = self.echo_sample.amplitude_img()
 
         if self.image is None:
             self.image = self.ax[0].imshow(image, extent=[0, image.shape[1], image.shape[0], 0])
@@ -105,7 +121,8 @@ class TracesWindow(Window):
 
         if self.helper is None: 
             self.helper = backend_qtquick5.MPLImageHelper(image, self.ax[0], offset = 0)
-            self.helper.image_coord_to_channel_index = echo_sample.image_coord_to_channel_index
+            self.helper.image_coord_to_channel_index = self.echo_sample.image_coord_to_channel_index
+            self.helper.channel_index_to_image_coord = self.echo_sample.channel_index_to_image_coord
 
 
     def _update_plots(self):
@@ -178,6 +195,10 @@ class TracesWindow(Window):
             marker_style = dict(color=color, marker='o', markersize=4, markerfacecolor=color, markeredgecolor = 'white')
             self.ax[0].plot(col+.5, row+.5, **marker_style)
 
+            # Amplitude and distance of echo in hovered channel
+            ech_idx = np.where(self.echo_sample.indices == index)[0]
+            self.ax[0].set_title(f'amp:{self.echo_sample.amplitudes[ech_idx]}, dst:{self.echo_sample.distances[ech_idx]}')
+
             len_drawn_traces = len(self.drawn_traces)
 
             self.draw_traces(index, color)
@@ -194,6 +215,7 @@ class TracesWindow(Window):
             self._update_legend()
             self.backend.draw()
             self.hover_coords = None
+            self.ax[0].set_title(f'')
         else:
             self.hover_coords = None
 
@@ -207,6 +229,15 @@ class TracesWindow(Window):
             self.window.selection = self.selection
             # self.hover_coords = None
             self._update_plots()
+
+    def _add_to_selection(self):
+        try:
+            channel = int(self.window.addToSelection)
+            row, col = self.helper.channel_index_to_image_coord(channel)
+            self.selection.append([row, col])
+            self.window.selection = self.selection
+        except: pass
+        self._update_plots()
 
 
     def draw_traces(self, index, color):
@@ -253,3 +284,30 @@ class TracesWindow(Window):
         self.drawn_traces = []
         self._update_legend()
 
+
+
+    def _placeholder_echo_sample(self):
+
+        if isinstance(self.trace_sample, FastTrace):
+            traces_raw = self.trace_sample.raw[self.datasource.sensor.FastTraceType.MidRange]
+        else:
+            traces_raw = self.trace_sample.raw
+
+        v, h = self.trace_sample.specs['v'], self.trace_sample.specs['h']
+        vv, hh = np.mgrid[0:v, 0:h]
+        coords_img = np.stack((vv,hh, np.arange(0, v*h).reshape(v, h)), axis=2)[...,2]
+        coords_img_tf = np.flipud(coords_img)
+        indices = coords_img_tf.flatten()
+        amplitudes = np.max(traces_raw['data'], axis=1)[indices]
+        distances = np.argmax(traces_raw['data'], axis=1)[indices]*traces_raw['distance_scaling']
+        distances += traces_raw['time_base_delays'][indices]
+
+        raw = clouds.to_echo_package(
+            indices = np.array(indices, 'u4'), 
+            distances = np.array(distances, 'f4'), 
+            amplitudes = np.array(amplitudes, 'f4'),
+            timestamp = self.trace_sample.timestamp,
+            specs = self.trace_sample.specs
+        )
+
+        return Echo(self.trace_sample.index, self.trace_sample.datasource, raw, self.trace_sample.timestamp)

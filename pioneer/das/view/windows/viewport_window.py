@@ -2,10 +2,10 @@ from pioneer.common import linalg, clouds
 from pioneer.common import platform as platform_utils
 from pioneer.common.gui import CustomActors, utils
 from pioneer.common.video import VideoRecorder, RecordableInterface
-from pioneer.das import categories
+from pioneer.das import categories, lane_types
 from pioneer.das.api import platform
 from pioneer.das.api.samples import Echo, XYZIT
-from pioneer.das.api.datasources.virtual_datasources import VoxelMap
+from pioneer.das.api.datasources.virtual_datasources import VoxelMap, VirtualDatasource
 from pioneer.das.view.windows import Window
 
 from PyQt5.QtCore import QObject
@@ -48,7 +48,10 @@ class ViewportWindow(Window, RecordableInterface):
     def connect(self):
 
         if self.platform.is_live():
-            self.platform[self.ds_name].ds.connect(self._update)    
+            if not isinstance(self.platform[self.ds_name], VirtualDatasource):
+                self.platform[self.ds_name].ds.connect(self._update)
+            else:
+                self.platform[self.platform[self.ds_name].dependencies[0]].ds.connect(self._update)
         else:
             self.add_connection(self.window.cursorChanged.connect(self._update))
         
@@ -56,13 +59,14 @@ class ViewportWindow(Window, RecordableInterface):
         self.add_connection(self.controls.showActorChanged.connect(self._update))
         self.add_connection(self.controls.showBBox3DChanged.connect(self._update))
         self.add_connection(self.controls.showSeg3DChanged.connect(self._update))
+        self.add_connection(self.controls.showLanesChanged.connect(self._update))
         self.add_connection(self.controls.useBoxColorsChanged.connect(self._update))
         self.add_connection(self.controls.boxLabelsSizeChanged.connect(self._update))
         self.add_connection(self.controls.videoChanged.connect(self._update))
         self.add_connection(self.controls.confThresholdChanged.connect(self._update))
         self.add_connection(self.controls.showIoUChanged.connect(self._update))
         self.add_connection(self.controls.categoryFilterChanged.connect(self._update))
-        self.add_connection(self.controls.mapMemoryChanged.connect(self._update_voxel_map))
+        self.add_connection(self.controls.submitVoxelMapMemory.clicked.connect(self._update_voxel_map))
         self.add_connection(self.controls.voxelSizeChanged.connect(self._update_voxel_map))
 
         sensor_type, pos, ds_type = platform_utils.parse_datasource_name(self.ds_name)
@@ -70,12 +74,19 @@ class ViewportWindow(Window, RecordableInterface):
         if ds_type.startswith('ech'):
             lcax = self.platform[f'{sensor_type}_{pos}']
             
-            self.add_connection(self.controls.distIntervalsChanged.connect(self._update_intervals))
-            self.add_connection(self.controls.ampIntervalsChanged.connect(self._update_intervals))
-            
             #load actual values in UI
             self.controls.distIntervals = [i for sub in lcax.config['dist_reject_intervals'] for i in sub]
             self.controls.ampIntervals = [i for sub in lcax.config['amp_reject_intervals'] for i in sub]
+
+            self.add_connection(self.controls.distIntervalsChanged.connect(self._update_intervals))
+            self.add_connection(self.controls.ampIntervalsChanged.connect(self._update_intervals))
+
+        if ds_type.startswith('xyzit-voxmap'): 
+            #load actual values in UI
+            self.controls.voxelMapMemory = str(self.platform[self.ds_name].memory)
+            self.controls.voxelMapSkip = str(self.platform[self.ds_name].skip)
+            self.controls.voxelSizeText = str(self.platform[self.ds_name].voxel_size)
+            self.controls.voxelSize = float(np.log10(self.platform[self.ds_name].voxel_size))
 
         self._update()
 
@@ -94,7 +105,9 @@ class ViewportWindow(Window, RecordableInterface):
 
         self._draw_bounding_box_actors()
 
-        # #video feed (must be done last)
+        self._draw_lane_actors()
+
+        # video feed (must be done last)
         self.video_recorder.record(self.controls.video and self.viewport.renderer is not None)
         
 
@@ -120,8 +133,12 @@ class ViewportWindow(Window, RecordableInterface):
             if not self.controls.showActor[datasource]:
                 continue
             if isinstance(self.platform[datasource], VoxelMap):
-                self.platform[datasource].memory = int(self.window.controls.mapMemory)
-                self.platform[datasource].voxel_size = 10**float(self.window.controls.voxelSize)
+                self.platform[datasource].clear_cache()
+                self.platform[datasource].memory = int(self.window.controls.voxelMapMemory)
+                self.platform[datasource].skip = int(self.window.controls.voxelMapSkip)
+                vxs = 10**float(self.window.controls.voxelSize)
+                self.platform[datasource].voxel_size = vxs if vxs > 0.01 else 0
+                self.window.controls.voxelSizeText = f'{self.platform[datasource].voxel_size:.2f}'
                 self.platform[datasource].invalidate_caches()
         self._update()
 
@@ -241,11 +258,8 @@ class ViewportWindow(Window, RecordableInterface):
             if not self.controls.showBBox3D[datasource]:
                 continue
 
-            
             sample = self._get_sample(datasource)
             
-            
-
             if np.abs(np.int64(self._ds_name_sample.timestamp) - sample.timestamp) <= 1e6:
 
                 _, _, ds_type = platform_utils.parse_datasource_name(datasource)
@@ -284,8 +298,6 @@ class ViewportWindow(Window, RecordableInterface):
                             if (self.controls.showIoU) and (self.controls.refdsIoU is not ''):
                                 name = f'{name}[IoU={scores_iou[mask][i]:.3f}]'
                         
-
-
                         bbox_actor, text_anchor = CustomActors.bbox(c, d, r, color=color, return_anchor=True)
                         bbox_actor.effect.lineWidth = 2
 
@@ -304,3 +316,17 @@ class ViewportWindow(Window, RecordableInterface):
                             actors['actor'].addActor(text_actor)
 
 
+    def _draw_lane_actors(self):
+
+        #TODO: transform to referential
+
+        for datasource, actors in self.viewport.laneActors.items():
+            actors['actor'].clearActors()
+            if not self.controls.showLanes[datasource]:
+                continue
+                
+            sample = self._get_sample(datasource)
+            for lane in sample.raw:
+                infos = lane_types.LANE_TYPES[lane['type']]
+                lane_actor = CustomActors.lane(lane['vertices'], color=QColor.fromRgb(*infos['color']), double=infos['double'], dashed=infos['dashed'])
+                actors['actor'].addActor(lane_actor)

@@ -16,6 +16,7 @@ DatasourceWindow {
     readonly property alias viewport: viewport_  //Python API
     property alias bboxes3D      : controls_.bboxes3D
     property alias seg3D         : controls_.seg3D
+    property alias lanes         : controls_.lanes
 
     property alias controls: controls_
 
@@ -55,6 +56,7 @@ DatasourceWindow {
             return m;
         }
         showIntervals: component.dsName.includes('_ech')
+        showVoxelMapSettings: component.dsName.includes('_xyzit-voxmap')
         worldCheckBoxVisible: true
         hasReferential: viewport_.allActors
         onWorldChanged: timer_.start()
@@ -167,7 +169,16 @@ DatasourceWindow {
             return m;
         }
 
-        readonly property var allActors : Utils.merge(pclActors, segActors, bboxActors)
+        readonly property var laneActors: {
+            var m = {};
+            for(var i = 0; i < laneInstantiator_.count; i++) {
+                var a = laneInstantiator_.objectAt(i);
+                m[a.objectName] = {hasReferential: a.hasReferential, actor: a};
+            }
+            return m;
+        }
+
+        readonly property var allActors : Utils.merge(pclActors, segActors, bboxActors, laneActors)
 
         actors: Actors {
             GridXZ{isXY: viewport_.isZUp}
@@ -237,6 +248,18 @@ DatasourceWindow {
                 instanciator: Instantiator {
                     id: bboxInstantiator_
                     model: component.bboxes3D
+                   
+                    delegate: Actors {
+                        objectName: modelData
+                        property bool hasReferential: true
+                    }
+                }
+            }
+
+            Actors {
+                instanciator: Instantiator {
+                    id: laneInstantiator_
+                    model: component.lanes
                    
                     delegate: Actors {
                         objectName: modelData
