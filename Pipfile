@@ -38,6 +38,7 @@ utm = "*"
 pioneer-das-api = "*"
 docopt = "*"
 pioneer-common-gui = "*"
+pioneer-das-view = "*"
 
 [requires]
 python_version = "3.6"
