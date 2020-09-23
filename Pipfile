@@ -14,9 +14,10 @@ pyyaml = "*"
 pandas = "*"
 opencv-python = "*"
 pioneer-common = "*"
-pioneer-das-api = "*"
 utm = "*"
 pioneer-common-gui = "*"
+pioneer-das-api = "*"
+docopt = "*"
 
 [requires]
 python_version = "3.6"

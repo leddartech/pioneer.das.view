@@ -10,7 +10,15 @@ setuptools.setup(
     description="Leddartech's das view",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    packages=setuptools.find_packages(),
+    packages=[
+        'pioneer',
+        'pioneer.das',
+        'pioneer.das.view',
+        'pioneer.das.view.apps',
+        'pioneer.das.view.qml',
+        'pioneer.das.view.qml.Das',
+        'pioneer.das.view.windows'
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -33,7 +41,8 @@ setuptools.setup(
         'pioneer-common',
         'pioneer-common-gui',
         'pioneer-das-api',
-        'utm'
+        'utm',
+        'docopt'
     ],
     include_package_data=True
 )
