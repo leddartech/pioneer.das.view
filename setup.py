@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pioneer_das_view", # Replace with your own username
-    version="0.0.1",
+    version="0.1.0",
     author="Leddartech",
     description="Leddartech's das view",
     long_description=long_description,
