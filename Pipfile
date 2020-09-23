@@ -1,0 +1,22 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+numpy = "*"
+matplotlib = "*"
+pyqt5 = "==5.14"
+tqdm = "*"
+pyyaml = "*"
+pandas = "*"
+opencv-python = "*"
+pioneer-common = "*"
+pioneer-das-api = "*"
+utm = "*"
+pioneer-common-gui = "*"
+
+[requires]
+python_version = "3.6"
