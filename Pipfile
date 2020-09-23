@@ -1,4 +1,24 @@
 [[source]]
+name = "gitlab"
+url = "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple"
+verify_ssl = true
+
+[[source]]
+name = "gitlab"
+url = "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/487/packages/pypi/simple"
+verify_ssl = true
+
+[[source]]
+name = "gitlab"
+url = "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/488/packages/pypi/simple"
+verify_ssl = true
+
+[[source]]
+name = "gitlab"
+url = "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/493/packages/pypi/simple"
+verify_ssl = true
+
+[[source]]
 name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
@@ -15,9 +35,9 @@ pandas = "*"
 opencv-python = "*"
 pioneer-common = "*"
 utm = "*"
-pioneer-common-gui = "*"
 pioneer-das-api = "*"
 docopt = "*"
+pioneer-common-gui = "*"
 
 [requires]
 python_version = "3.6"

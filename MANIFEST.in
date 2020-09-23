@@ -1,1 +1,1 @@
-recursive-include leddartech *.qml qmldir *.yml
+recursive-include pioneer *.qml qmldir *.yml
