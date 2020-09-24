@@ -26,9 +26,9 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     dependency_links=[
-        "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple/pioneer-common",
-        "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/487/packages/pypi/simple/pioneer-das-api",
-        "https://__token__:qcnZ-LPju8cqtpG1cpss@svleddar-gitlab.leddartech.local/api/v4/projects/488/packages/pypi/simple/pioneer-common-gui"
+        "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple/pioneer-common",
+        "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/487/packages/pypi/simple/pioneer-das-api",
+        "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/488/packages/pypi/simple/pioneer-common-gui"
     ],
     install_requires=[
         'numpy',
@@ -44,5 +44,5 @@ setuptools.setup(
         'utm',
         'docopt'
     ],
-    include_package_data=True
+    include_package_data = True
 )
