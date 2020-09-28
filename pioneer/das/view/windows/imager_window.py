@@ -314,10 +314,13 @@ class ImagerWindow(Window, RecordableInterface):
                 raw = box3d_sample.raw
                 box3d = box3d_sample.mapto(self.datasource, ignore_orientation=True)
                 mask = (box3d['flags'] >= 0)
+
                 if 'confidence' in raw:
                     mask = mask & (raw['confidence'] > self.conf_threshold)
+
                 if len(box3d[mask]) > 0:
                     for i, box in enumerate(box3d[mask]):
+
                         name, color = categories.get_name_color(box_source, box['classes'])
                         if self.category_filter is not '' and name not in self.category_filter:
                             break
@@ -325,19 +328,23 @@ class ImagerWindow(Window, RecordableInterface):
                         color = np.array(color)/255
                         if self.use_box_colors:
                             color = utils.to_numpy(QColor(self.box_3d_colors[ds_name]))[:3]
+
                         if 'confidence' in raw:
                             conf = raw['confidence'][mask][i]
                             name = f"{name}({conf:.3f})"
+
                         vertices = linalg.bbox_to_8coordinates(box['c'],box['d'],box['r'])
-                        p = sample.project_pts(vertices, undistorted=self.undistortimage)
-                        #FIXME : find a better way to prevent glitched boxes
-                        if (p[:,1].max() - p[:,1].min()) > image.shape[1]/2: #Remove most glitched boxes, but this is dirty.
+                        p, mask = sample.project_pts(vertices, mask_fov=False, output_mask=True, undistorted=self.undistortimage, margin=300)
+
+                        if p[mask].shape[0] < 8:
                             continue
+                        
                         faces = [[0,1,3,2],[0,1,5,4],[0,2,6,4],[7,3,1,5],[7,5,4,6],[7,6,2,3]]
                         for face in faces:
                             poly = np.vstack([p[face[0]],p[face[1]],p[face[2]],p[face[3]],p[face[0]]])
                             patch = Polygon(poly, closed=True,linewidth=1,edgecolor=color,facecolor=list(color)+[0.075])
                             self.ax.add_patch(patch)
+
                         if self.box_labels_size > 0:
                             txt = self.ax.text(p[:,0].min(),p[:,1].min(),name+':'+str(box['id']),color='w',fontweight='bold', fontsize=self.box_labels_size, clip_on=True)
                             txt.set_path_effects([PathEffects.withStroke(linewidth=1, foreground='k')])
@@ -355,7 +362,7 @@ class ImagerWindow(Window, RecordableInterface):
             for lane in lane_sample.raw:
 
                 vertices = lane_sample.transform(lane['vertices'], self.datasource, ignore_orientation=True)
-                projected_lane = sample.project_pts(vertices, undistorted=self.undistortimage, mask_fov=True) 
+                projected_lane = sample.project_pts(vertices, undistorted=self.undistortimage, mask_fov=True, margin=300) 
                 
                 infos = lane_types.LANE_TYPES[lane['type']]
 
