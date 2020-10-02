@@ -2,7 +2,6 @@ from pioneer.common import platform as platform_utils
 from pioneer.common.gui import interactive, CustomActors, utils
 from pioneer.common.gui.qml import backend_qtquick5
 from pioneer.das.api.platform import Platform
-from pioneer.das.api.datasources.virtual_datasources import FlirCylindricalProjection, LCAx_XYZIT_traces_projection, Echoes_from_Traces, VoxelMap
 from pioneer.das.view import QMLDIR
 from pioneer.das.view.windows import PlayerWindow, CalibWindow, MetadataWindow, ViewportWindow, ImagerWindow, TracesWindow, ScalarsWindow
 

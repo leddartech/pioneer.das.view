@@ -246,12 +246,12 @@ class TracesWindow(Window):
 
             if isinstance(self.trace_sample, FastTrace):
                 if self.window.showHighFastTrace:
-                    trace_high = self.trace_sample.raw[self.datasource.sensor.FastTraceType.MidRange]['data'][index]
+                    trace_high = self.trace_sample.raw['high']['data'][index]
                     self.ax[1].plot(trace_high, color=color, label=f'Raw(High): {index}')
                     self.drawn_traces.append(trace_high)
 
                 if self.window.showLowFastTrace:
-                    trace_low = self.trace_sample.raw[self.datasource.sensor.FastTraceType.LowRange]['data'][index]
+                    trace_low = self.trace_sample.raw['low']['data'][index]
                     self.ax[1].plot(trace_low, color=color, ls=':', label=f'Raw(Low): {index}')
                     self.drawn_traces.append(trace_low)
             else:
@@ -264,12 +264,12 @@ class TracesWindow(Window):
 
             if isinstance(self.trace_sample, FastTrace):
                 if self.window.showHighFastTrace:
-                    trace_processed_high = self.trace_processed[self.datasource.sensor.FastTraceType.MidRange]['data'][index]
+                    trace_processed_high = self.trace_processed['high']['data'][index]
                     self.ax[1].plot(trace_processed_high, color=color, ls='--', label=f'Processed(High): {index}')
                     self.drawn_traces.append(trace_processed_high)
 
                 if self.window.showLowFastTrace:
-                    trace_processed_low = self.trace_processed[self.datasource.sensor.FastTraceType.LowRange]['data'][index]
+                    trace_processed_low = self.trace_processed['low']['data'][index]
                     self.ax[1].plot(trace_processed_low, color=color, ls='-.', label=f'Processed(Low): {index}')
                     self.drawn_traces.append(trace_processed_low)
             else:
@@ -289,7 +289,7 @@ class TracesWindow(Window):
     def _placeholder_echo_sample(self):
 
         if isinstance(self.trace_sample, FastTrace):
-            traces_raw = self.trace_sample.raw[self.datasource.sensor.FastTraceType.MidRange]
+            traces_raw = self.trace_sample.raw['high']
         else:
             traces_raw = self.trace_sample.raw
 
