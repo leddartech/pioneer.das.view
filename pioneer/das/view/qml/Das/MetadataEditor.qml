@@ -289,7 +289,7 @@ Window {
                             color: 'gray'
                             width: tableView_.columnWidthProvider(modelData)
                             height: 35
-                            text: tableView_.model.headerData(modelData, Qt.Horizontal)
+                            text: windowsUIModel.metadataEditorVisible ? tableView_.model.headerData(modelData, Qt.Horizontal) : ''
                             padding: 10
                             verticalAlignment: Text.AlignVCenter
                             background: Rectangle {color: 'white'}
@@ -306,7 +306,7 @@ Window {
                             color: 'gray'
                             width: 60
                             height: tableView_.rowHeightProvider(modelData)
-                            text: tableView_.model.headerData(modelData, Qt.Vertical)
+                            text: windowsUIModel.metadataEditorVisible ? tableView_.model.headerData(modelData, Qt.Vertical) : ''
                             padding: 10
                             verticalAlignment: Text.AlignVCenter
                             background: Rectangle {color: 'white'}

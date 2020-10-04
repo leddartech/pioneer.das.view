@@ -146,7 +146,6 @@ class Viewer(object):
         QQmlProperty.write(self.leddar_vp.root, "customViewports", ds_names)
         
         self.custom_viewport_windows = {}
-
         
         while not all(k in self.custom_viewport_windows for k in ds_names) :
             QApplication.processEvents()
@@ -178,8 +177,6 @@ class Viewer(object):
             , 'size'        : len(self.synchronized)}
 
         QQmlProperty.write(self.leddar_vp.root, "customDatasources", self.custom_datasources)
-
-
 
         return self.callbacks["custom_viewport_windows"]
 
