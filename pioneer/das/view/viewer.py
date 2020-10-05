@@ -2,7 +2,6 @@ from pioneer.common import platform as platform_utils
 from pioneer.common.gui import interactive, CustomActors, utils
 from pioneer.common.gui.qml import backend_qtquick5
 from pioneer.das.api.platform import Platform
-from pioneer.das.api.datasources.virtual_datasources import FlirCylindricalProjection, LCAx_XYZIT_traces_projection, Echoes_from_Traces, VoxelMap
 from pioneer.das.view import QMLDIR
 from pioneer.das.view.windows import PlayerWindow, CalibWindow, MetadataWindow, ViewportWindow, ImagerWindow, TracesWindow, ScalarsWindow
 
@@ -147,7 +146,6 @@ class Viewer(object):
         QQmlProperty.write(self.leddar_vp.root, "customViewports", ds_names)
         
         self.custom_viewport_windows = {}
-
         
         while not all(k in self.custom_viewport_windows for k in ds_names) :
             QApplication.processEvents()
@@ -179,8 +177,6 @@ class Viewer(object):
             , 'size'        : len(self.synchronized)}
 
         QQmlProperty.write(self.leddar_vp.root, "customDatasources", self.custom_datasources)
-
-
 
         return self.callbacks["custom_viewport_windows"]
 
