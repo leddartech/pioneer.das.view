@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pioneer_das_view", # Replace with your own username
-    version="0.1.0",
+    version="0.2.0",
     author="Leddartech",
     description="Leddartech's das view",
     long_description=long_description,
@@ -38,9 +38,9 @@ setuptools.setup(
         'pyyaml',
         'pandas',
         'opencv-python',
-        'pioneer-common',
-        'pioneer-common-gui',
-        'pioneer-das-api',
+        'pioneer-common>=0.2.0',
+        'pioneer-common-gui>=0.1.0',
+        'pioneer-das-api>=0.2.0',
         'utm',
         'docopt'
     ],
