@@ -33,7 +33,7 @@ setuptools.setup(
     install_requires=[
         'numpy',
         'matplotlib',
-        'PyQt5>=5.14',
+        'PyQt5==5.14',
         'tqdm',
         'pyyaml',
         'pandas',
