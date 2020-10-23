@@ -1,7 +1,6 @@
 from pioneer.common import clouds, linalg
 from pioneer.common.gui import Array, Product, Transforms, Geometry, Image
-from pioneer.das import categories
-from pioneer.das.api import platform, sensors
+from pioneer.das.api import categories, platform, sensors
 from pioneer.das.calibration import intrinsics
 
 from datetime import datetime
