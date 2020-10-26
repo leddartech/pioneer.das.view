@@ -1,7 +1,9 @@
 from pioneer.common import clouds, linalg
 from pioneer.common.gui import Array, Product, Transforms, Geometry, Image
 from pioneer.das.api import categories, platform, sensors
-from pioneer.das.calibration import intrinsics
+try:
+    from pioneer.das.calibration import intrinsics
+except: pass
 
 from datetime import datetime
 from matplotlib import colors
