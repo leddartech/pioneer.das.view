@@ -1,6 +1,6 @@
 from pioneer.common import linalg
 from pioneer.common.logging_manager import LoggingManager
-from pioneer.das.calibration import icp_method as icp
+from pioneer.common import icp_method as icp
 from pioneer.das.view.windows import Window
 
 from enum import Enum
