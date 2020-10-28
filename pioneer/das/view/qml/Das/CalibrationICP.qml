@@ -36,7 +36,7 @@ ColumnLayout {
         Text {text: 'max correspondence distance: '}
         TextField {
             id: correspDistMax_
-            placeholderText: "0.50"
+            text: "0.50"
             Layout.preferredHeight: 25
             Layout.preferredWidth: 50
             font.pointSize: 8
@@ -46,7 +46,7 @@ ColumnLayout {
         Text {text: 'max iterations: '}
         TextField {
             id: nbIterMax_
-            placeholderText: "35"
+            text: "35"
             Layout.preferredHeight: 25
             Layout.preferredWidth: 50
             font.pointSize: 8
@@ -62,7 +62,7 @@ ColumnLayout {
         Text {text: '  Enter source frame number: '}
         TextField {
             id: sourceFrameNo_
-            placeholderText: "1"
+            text: "1"
             Layout.preferredHeight: 25
             Layout.preferredWidth: 50
             font.pointSize: 8
