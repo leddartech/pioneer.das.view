@@ -1,7 +1,7 @@
 from pioneer.common.logging_manager import LoggingManager
 from pioneer.common.gui.Table import DataFrameModel
+from pioneer.das.api.categories import get_category_number
 from pioneer.das.api.datasources import VirtualDatasource
-from pioneer.das.categories import get_category_number
 from pioneer.das.tests import validate_imu_flow as vif
 from pioneer.das.view.windows import Window
 

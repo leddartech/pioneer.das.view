@@ -2,8 +2,7 @@ from pioneer.common import linalg, clouds
 from pioneer.common import platform as platform_utils
 from pioneer.common.gui import CustomActors, utils
 from pioneer.common.video import VideoRecorder, RecordableInterface
-from pioneer.das import categories, lane_types
-from pioneer.das.api import platform
+from pioneer.das.api import categories, lane_types, platform
 from pioneer.das.api.samples import Echo, XYZIT
 from pioneer.das.api.datasources.virtual_datasources import VoxelMap, VirtualDatasource
 from pioneer.das.view.windows import Window

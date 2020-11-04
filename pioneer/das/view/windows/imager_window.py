@@ -2,7 +2,7 @@ from pioneer.common import linalg
 from pioneer.common.platform import parse_datasource_name
 from pioneer.common.gui import utils
 from pioneer.common.video import VideoRecorder, RecordableInterface
-from pioneer.das import categories, lane_types
+from pioneer.das.api import categories, lane_types
 from pioneer.das.api.platform import Platform
 from pioneer.das.api.samples import ImageFisheye, ImageCylinder, Echo
 from pioneer.das.api.sensors import Sensor
