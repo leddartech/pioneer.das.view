@@ -41,3 +41,24 @@ pipenv install --skip-lock
 pipenv run python ./pioneer/das/view/apps/dasview.py /path/to/dataset
 
 ```
+
+## Troubleshooting
+
+**QOpenGLShader::link: error: no shaders attached to the program**
+
+QOpenGLShaderProgram::uniformLocation(backColor): shader program is not linked
+QOpenGLShaderProgram::uniformLocation(color): shader program is not linked
+QOpenGLShader::link: error: no shaders attached to the program
+
+If you encounter this error, update your drivers
+```
+sudo ubuntu-drivers autoinstall
+```
+
+**module not found open3d.open3d_pybind**
+
+You need to fix the open3d version to 0.10
+```
+pip3 uninstall open3d
+pip3 install open3d==0.10
+```
