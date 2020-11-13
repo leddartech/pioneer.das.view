@@ -46,6 +46,8 @@ ColumnLayout {
     property alias submitVoxelMapMemory : submitVoxelMapMemory_
     property alias voxelSize            : voxelSize_.value
     property alias voxelSizeText        : voxelSizeText_.text
+    property alias amplitudeType        : amplitudeType_.currentText
+    property alias amplitudeTypeVisible  : amplitudeType_.visible
 
     property var showActor  : Utils.makeVisibilityDict(component.viewports)
     property var showBBox2D : Utils.makeVisibilityDict(component.bboxes2D)
@@ -215,6 +217,16 @@ ColumnLayout {
                     from: 0
                     to: 100
                     Layout.preferredWidth: 150
+                }
+                Text {
+                    visible: amplitudeTypeVisible
+                    Layout.alignment: Qt.AlignRight
+                    text: "ampl type: "
+                    font.pointSize: 8
+                }
+                ComboBox {
+                    id: amplitudeType_
+                    model: ["signal", "cfar_snr", "velocity"]
                 }
                 
                 RowLayout {

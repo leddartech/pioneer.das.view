@@ -186,7 +186,7 @@ DatasourceWindow {
             Actors {
                 instanciator: Instantiator {
                     id: pclInstanciator_
-                    model: component.viewports.filter(function(ds){return ds.includes("_ech") || ds.includes("_xyzit") || ds.includes("_rad");});
+                    model: component.viewports.filter(function(ds){return ds.includes("_ech") || ds.includes("_xyzit") || ds.includes("_xyzvcfar");});
                     
                     delegate: LidarActor {
                         id: actor_
@@ -200,6 +200,7 @@ DatasourceWindow {
                         undistort: controls_.undistort
                         pointSize: controls_.pointSize
                         amplitudeRatio: controls_.amplitudeRatio
+                        amplitudeType: controls_.amplitudeType
                         logScale: controls_.logScale
 
                         property var c: Connections {
