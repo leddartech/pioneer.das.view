@@ -262,6 +262,8 @@ class DasSampleToCloud(Array.ArrayDouble3):
 
     Product.InputProperty(vars(), float, 'amplitudeRatio')
 
+    Product.InputProperty(vars(), str, 'amplitudeType')
+
     Product.InputProperty(vars(), bool, 'logScale')
 
 #outputs:

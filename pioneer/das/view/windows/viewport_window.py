@@ -19,6 +19,7 @@ import pickle
 import random
 import time
 
+
 class ViewportWindow(Window, RecordableInterface):
 
     def __init__(self, window, platform, synchronized, ds_name, video_fps):
@@ -40,7 +41,7 @@ class ViewportWindow(Window, RecordableInterface):
         """
         Overrided
         """
-        QApplication.processEvents() #make sure frame is current
+        QApplication.processEvents()  # make sure frame is current
         arr = self.viewport.get_render_to_texture_array()
         return arr.ndarray
 
@@ -53,7 +54,7 @@ class ViewportWindow(Window, RecordableInterface):
                 self.platform[self.platform[self.ds_name].dependencies[0]].ds.connect(self._update)
         else:
             self.add_connection(self.window.cursorChanged.connect(self._update))
-        
+
         self.add_connection(self.window.visibleChanged.connect(self._update))
         self.add_connection(self.controls.showActorChanged.connect(self._update))
         self.add_connection(self.controls.showBBox3DChanged.connect(self._update))
@@ -67,39 +68,41 @@ class ViewportWindow(Window, RecordableInterface):
         self.add_connection(self.controls.categoryFilterChanged.connect(self._update))
         self.add_connection(self.controls.submitVoxelMapMemory.clicked.connect(self._update_voxel_map))
         self.add_connection(self.controls.voxelSizeChanged.connect(self._update_voxel_map))
+        self.add_connection(self.controls.amplitudeTypeChanged.connect(self._update_amplitude_type))
 
         sensor_type, pos, ds_type = platform_utils.parse_datasource_name(self.ds_name)
 
         if ds_type.startswith('ech'):
             lcax = self.platform[f'{sensor_type}_{pos}']
-            
-            #load actual values in UI
+
+            # load actual values in UI
             self.controls.distIntervals = [i for sub in lcax.config['dist_reject_intervals'] for i in sub]
             self.controls.ampIntervals = [i for sub in lcax.config['amp_reject_intervals'] for i in sub]
 
             self.add_connection(self.controls.distIntervalsChanged.connect(self._update_intervals))
             self.add_connection(self.controls.ampIntervalsChanged.connect(self._update_intervals))
 
-        if ds_type.startswith('xyzit-voxmap'): 
-            #load actual values in UI
+        if ds_type.startswith('xyzit-voxmap'):
+            # load actual values in UI
             self.controls.voxelMapMemory = str(self.platform[self.ds_name].memory)
             self.controls.voxelMapSkip = str(self.platform[self.ds_name].skip)
             self.controls.voxelSizeText = str(self.platform[self.ds_name].voxel_size)
             self.controls.voxelSize = float(np.log10(self.platform[self.ds_name].voxel_size))
 
-        self._update()
+        self.controls.amplitudeTypeVisible = ds_type == "xyzvcfar"
 
+        self._update()
 
     def _update(self):
 
-        cursor          = -1 if self.platform.is_live() else int(self.window['cursor'])
+        cursor = -1 if self.platform.is_live() else int(self.window['cursor'])
 
         self._ds_name_sample = self.platform[self.ds_name][cursor]
 
         self._draw_frustrum()
 
         self._draw_clouds_actors()
- 
+
         self._draw_sementic_segmentation_actors()
 
         self._draw_bounding_box_actors()
@@ -108,16 +111,15 @@ class ViewportWindow(Window, RecordableInterface):
 
         # video feed (must be done last)
         self.video_recorder.record(self.controls.video and self.viewport.renderer is not None)
-        
 
     def _update_intervals(self):
 
         sensor_type, pos, ds_type = platform_utils.parse_datasource_name(self.ds_name)
-    
+
         lcax = self.platform[f'{sensor_type}_{pos}']
 
         def to_intervals(slices):
-            return [[(slices[i*2]), (slices[i*2+1])] for i in range(len(slices)//2)]
+            return [[(slices[i * 2]), (slices[i * 2 + 1])] for i in range(len(slices) // 2)]
 
         lcax.config['dist_reject_intervals'] = to_intervals(self.controls.distIntervals)
         lcax.config['amp_reject_intervals'] = to_intervals(self.controls.ampIntervals)
@@ -126,7 +128,6 @@ class ViewportWindow(Window, RecordableInterface):
 
         self._update()
 
-    
     def _update_voxel_map(self):
         for datasource, actor in self.viewport.pclActors.items():
             if not self.controls.showActor[datasource]:
@@ -135,30 +136,30 @@ class ViewportWindow(Window, RecordableInterface):
                 self.platform[datasource].clear_cache()
                 self.platform[datasource].memory = int(self.window.controls.voxelMapMemory)
                 self.platform[datasource].skip = int(self.window.controls.voxelMapSkip)
-                vxs = 10**float(self.window.controls.voxelSize)
+                vxs = 10 ** float(self.window.controls.voxelSize)
                 self.platform[datasource].voxel_size = vxs if vxs > 0.01 else 0
                 self.window.controls.voxelSizeText = f'{self.platform[datasource].voxel_size:.2f}'
                 self.platform[datasource].invalidate_caches()
         self._update()
 
-
-
+    def _update_amplitude_type(self):
+        self.platform['radarTI_bfc'].amplitude_type = self.window.controls.amplitudeType
+        self._update()
 
     def _get_sample(self, ds_name):
-        
         if ds_name == self.ds_name:
             return self._ds_name_sample
         else:
             return self.platform[ds_name].get_at_timestamp(self._ds_name_sample.timestamp)
 
     def _draw_frustrum(self):
-        
+
         _, _, ds_type = platform_utils.parse_datasource_name(self.ds_name)
-        
+
         self._ds_name_sample = self._get_sample(self.ds_name)
 
         if 'ech' in ds_type and not hasattr(self, 'frustrum'):
-            
+
             lcax = self._ds_name_sample.datasource.sensor
             specs = self._ds_name_sample.specs
 
@@ -168,25 +169,25 @@ class ViewportWindow(Window, RecordableInterface):
 
                 v_cell_size, h_cell_size = clouds.v_h_cell_size_rad(specs)
 
-                i,v = clouds.frustrum(clouds.custom_frustrum_directions(correct_v_angles, v_cell_size, h_cell_size, dtype = np.float64), 40)
+                i, v = clouds.frustrum(clouds.custom_frustrum_directions(correct_v_angles, v_cell_size, h_cell_size, dtype=np.float64), 40)
             else:
-                i,v = clouds.frustrum(clouds.frustrum_directions(specs['v_fov'], specs['h_fov'], dtype = np.float64))
+                i, v = clouds.frustrum(clouds.frustrum_directions(specs['v_fov'], specs['h_fov'], dtype=np.float64))
 
             if self._ds_name_sample.orientation is not None:
                 v = (self._ds_name_sample.orientation @ v.T).T
-            frustrum = CustomActors.lines(i, v, color = QColor("lightgray"))
+            frustrum = CustomActors.lines(i, v, color=QColor("lightgray"))
             self.frustrum = self.viewport.actors.addActor(frustrum)
 
     def _draw_clouds_actors(self):
 
-        #point cloud actors:
+        # point cloud actors:
         for datasource, actor in self.viewport.pclActors.items():
 
             if not self.controls.showActor[datasource]:
                 continue
 
             package = actor['packages']
-            cloud =  actor['cloud']
+            cloud = actor['cloud']
             sensor = self.platform.sensors[platform_utils.extract_sensor_id(datasource)]
             sensor.extrinsics_dirty.connect(cloud.makeDirty)
             if datasource != self.ds_name:
@@ -194,17 +195,17 @@ class ViewportWindow(Window, RecordableInterface):
                 ref_sensor.extrinsics_dirty.connect(sensor.extrinsics_dirty)
 
             sample = self._get_sample(datasource)
-            
+
             cloud.undistortRefTs = int(self._ds_name_sample.timestamp)
 
             cloud.sample.variant = sample
 
             if isinstance(sample, Echo):
-                package.variant = sample.masked #FIXME: port 2d viewers to das.api too
+                package.variant = sample.masked  # FIXME: port 2d viewers to das.api too
 
     def _draw_sementic_segmentation_actors(self):
-        
-        #segmentation 3d actors:
+
+        # segmentation 3d actors:
         seg_actors = self.viewport.segActors
         for datasource, actor in seg_actors.items():
 
@@ -212,7 +213,7 @@ class ViewportWindow(Window, RecordableInterface):
                 continue
 
             package = actor['packages']
-            cloud =  actor['cloud']
+            cloud = actor['cloud']
 
             ds_name, pos, _ = platform_utils.parse_datasource_name(datasource)
 
@@ -223,7 +224,11 @@ class ViewportWindow(Window, RecordableInterface):
             elif f'{ds_name}_{pos}_xyzit' in self.viewport.pclActors:
                 pcl_ds = f'{ds_name}_{pos}_xyzit'
                 cloud.method = 'point_cloud'
-            
+
+            elif f'{ds_name}_{pos}_xyzvcfar' in self.viewport.pclActors:
+                pcl_ds = f'{ds_name}_{pos}_xyzvcfar'
+                cloud.method = 'point_cloud'
+
             elif f'{ds_name}_{pos}_rad' in self.viewport.pclActors:
                 pcl_ds = f'{ds_name}_{pos}_rad'
                 cloud.method = 'point_cloud'
@@ -234,11 +239,11 @@ class ViewportWindow(Window, RecordableInterface):
             len_seg3d = seg_sample.raw['data'].shape[0]
             len_pcl = pcl_sample.masked['data'].shape[0]
             if len_seg3d != len_pcl:
-                print(f'Warning. The length ({len_seg3d}) of the segmentation 3D data' \
-                    +f'does not match the length ({len_pcl}) of the point cloud.')
+                print(f'Warning. The length ({len_seg3d}) of the segmentation 3D data'
+                      + f'does not match the length ({len_pcl}) of the point cloud.')
 
             # TODO: categoryFilter is not applied to segmentation3d here
-            
+
             cloud.undistortRefTs = int(self._ds_name_sample.timestamp)
 
             cloud.sample.variant = pcl_sample
@@ -250,38 +255,38 @@ class ViewportWindow(Window, RecordableInterface):
     def _draw_bounding_box_actors(self):
         ## Attemp to add Box in Viewer API
         ## WIP to have a better implementation
-        
+
         for datasource, actors in self.viewport.bboxActors.items():
-            
+
             actors['actor'].clearActors()
             if not self.controls.showBBox3D[datasource]:
                 continue
 
             sample = self._get_sample(datasource)
-            
+
             if np.abs(np.int64(self._ds_name_sample.timestamp) - sample.timestamp) <= 1e6:
 
                 _, _, ds_type = platform_utils.parse_datasource_name(datasource)
                 box_source = categories.get_source(ds_type)
 
                 raw = sample.raw
-                bbox = sample.mapto(self.ds_name, ignore_orientation = True)
+                bbox = sample.mapto(self.ds_name, ignore_orientation=True)
                 mask = (bbox['flags'] >= 0)
 
                 if 'confidence' in raw:
-                    mask = mask & (sample.raw['confidence'] > int(self.controls.confThreshold)/100.0)
+                    mask = mask & (sample.raw['confidence'] > int(self.controls.confThreshold) / 100.0)
 
                     if (self.controls.showIoU) and (self.controls.refdsIoU is not ''):
-                        scores_iou = sample.compute_iou(box=self._get_sample(self.controls.refdsIoU), 
-                                                return_max=True, map2yaw=None)
+                        scores_iou = sample.compute_iou(box=self._get_sample(self.controls.refdsIoU),
+                                                        return_max=True, map2yaw=None)
 
-                if len(bbox[mask])>0:
+                if len(bbox[mask]) > 0:
                     for i, box in enumerate(bbox[mask]):
-                        
+
                         c = box['c']
                         d = box['d']
                         r = box['r']
-                        name,color = categories.get_name_color(box_source, box['classes'])
+                        name, color = categories.get_name_color(box_source, box['classes'])
                         if self.controls.categoryFilter is not '':
                             if name not in self.controls.categoryFilter:
                                 continue
@@ -296,7 +301,7 @@ class ViewportWindow(Window, RecordableInterface):
 
                             if (self.controls.showIoU) and (self.controls.refdsIoU is not ''):
                                 name = f'{name}[IoU={scores_iou[mask][i]:.3f}]'
-                        
+
                         bbox_actor, text_anchor = CustomActors.bbox(c, d, r, color=color, return_anchor=True)
                         bbox_actor.effect.lineWidth = 2
 
@@ -306,26 +311,28 @@ class ViewportWindow(Window, RecordableInterface):
 
                         if self.controls.boxLabelsSize > 0:
                             text_actor = CustomActors.text(name
-                                                        , color = text_color
-                                                        , origin = [0,0,0], v = [0,-1,0]
-                                                        , matrix = utils.from_numpy(tf)
-                                                        , scale = 0.1, font_size = self.controls.boxLabelsSize, line_width = 3
-                                                        , is_billboard = True)
+                                                           , color=text_color
+                                                           , origin=[0, 0, 0], v=[0, -1, 0]
+                                                           , matrix=utils.from_numpy(tf)
+                                                           , scale=0.1
+                                                           , font_size=self.controls.boxLabelsSize
+                                                           , line_width=3
+                                                           , is_billboard=True)
 
                             actors['actor'].addActor(text_actor)
 
-
     def _draw_lane_actors(self):
 
-        #TODO: transform to referential
+        # TODO: transform to referential
 
         for datasource, actors in self.viewport.laneActors.items():
             actors['actor'].clearActors()
             if not self.controls.showLanes[datasource]:
                 continue
-                
+
             sample = self._get_sample(datasource)
             for lane in sample.raw:
                 infos = lane_types.LANE_TYPES[lane['type']]
-                lane_actor = CustomActors.lane(lane['vertices'], color=QColor.fromRgb(*infos['color']), double=infos['double'], dashed=infos['dashed'])
+                lane_actor = CustomActors.lane(lane['vertices'], color=QColor.fromRgb(*infos['color']),
+                                               double=infos['double'], dashed=infos['dashed'])
                 actors['actor'].addActor(lane_actor)
