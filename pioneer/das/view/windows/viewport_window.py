@@ -89,7 +89,8 @@ class ViewportWindow(Window, RecordableInterface):
             self.controls.voxelSizeText = str(self.platform[self.ds_name].voxel_size)
             self.controls.voxelSize = float(np.log10(self.platform[self.ds_name].voxel_size))
 
-        self.controls.amplitudeTypeVisible = ds_type == "xyzvcfar"
+        if 'radarTI_bfc' in self.platform._sensors.keys():
+            self.controls.amplitudeTypeVisible = True
 
         self._update()
 
