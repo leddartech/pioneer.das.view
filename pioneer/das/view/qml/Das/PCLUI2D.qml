@@ -221,12 +221,12 @@ ColumnLayout {
                 Text {
                     visible: amplitudeTypeVisible
                     Layout.alignment: Qt.AlignRight
-                    text: "ampl type: "
+                    text: "radar ampl type: "
                     font.pointSize: 8
                 }
                 ComboBox {
                     id: amplitudeType_
-                    model: ["signal", "cfar_snr", "velocity"]
+                    model: ["cfar_snr", "cfar_noise", "velocity"]
                 }
                 
                 RowLayout {
