@@ -1,0 +1,12 @@
+numpy
+matplotlib
+PyQt5==5.14
+tqdm
+pyyaml
+pandas
+opencv-python
+pioneer-common>=0.4
+pioneer-common-gui>=0.1
+pioneer-das-api>=0.4
+utm
+docopt
