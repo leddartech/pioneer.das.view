@@ -36,6 +36,7 @@ Actors {
     property string colorMap : 'jet'
     property string sensorColor: ''
     property bool useSeg3D: false
+    property bool useRGB: false
 
     property bool visible: true
 
@@ -134,7 +135,7 @@ Actors {
             id: geometry_
             primitiveType: cloud_.primitiveType
             indices: cloud_.indices
-            attribs: component.useSeg3D ? colorsAttribs_ : amplitudeAttribs_
+            attribs: component.useSeg3D | component.useRGB ? colorsAttribs_ : amplitudeAttribs_
         }
         onClicked: {
             var point = worldOrigin.plus(worldDirection.times(tuv.x))
@@ -181,7 +182,7 @@ Actors {
         }
         effect: Effect {
             pointSize: component.pointSize //for point clouds
-            shader0: component.useSeg3D ? pointscolor_ : (component.colorMap == '' ? ampl_ : cmap_)
+            shader0: component.useSeg3D | component.useRGB ? pointscolor_ : (component.colorMap == '' ? ampl_ : cmap_)
         }
     }
 }

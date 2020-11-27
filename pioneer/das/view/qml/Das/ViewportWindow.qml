@@ -202,6 +202,7 @@ DatasourceWindow {
                         amplitudeRatio: controls_.amplitudeRatio
                         amplitudeType: controls_.amplitudeType
                         logScale: controls_.logScale
+                        useRGB: modelData.includes("-rgb") // This is dirty. The way the point clouds are colored should be refactored at some point.
 
                         property var c: Connections {
                             target: actor_.echoActor
