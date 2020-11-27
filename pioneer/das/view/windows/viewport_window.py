@@ -201,6 +201,14 @@ class ViewportWindow(Window, RecordableInterface):
 
             cloud.sample.variant = sample
 
+            if '-rgb' in datasource: #TODO: generalize how colors are obtained from the sample
+                data = sample.raw
+                colors = np.ones((data.shape[0],4))
+                colors[:,0] = data['r']/255
+                colors[:,1] = data['g']/255
+                colors[:,2] = data['b']/255
+                cloud._colors.set_ndarray(colors)
+
             if isinstance(sample, Echo):
                 package.variant = sample.masked  # FIXME: port 2d viewers to das.api too
 
@@ -228,10 +236,6 @@ class ViewportWindow(Window, RecordableInterface):
 
             elif f'{ds_name}_{pos}_xyzvcfar' in self.viewport.pclActors:
                 pcl_ds = f'{ds_name}_{pos}_xyzvcfar'
-                cloud.method = 'point_cloud'
-
-            elif f'{ds_name}_{pos}_rad' in self.viewport.pclActors:
-                pcl_ds = f'{ds_name}_{pos}_rad'
                 cloud.method = 'point_cloud'
 
             pcl_sample = self._get_sample(pcl_ds)

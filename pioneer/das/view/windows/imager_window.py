@@ -36,9 +36,7 @@ class ImagerWindow(Window, RecordableInterface):
         self.video_recorder = VideoRecorder.create(self, datasource, platform, synchronized, video_fps)
 
     def get_frame(self):
-        """
-        Overrided
-        """
+        """Override"""
         width, height = self.backend.getFigure().get_size_inches() * self.backend.getFigure().get_dpi()
         return np.fromstring(self.backend.tostring_rgb(), dtype='uint8').reshape(int(height),int(width),3)
 
@@ -178,6 +176,8 @@ class ImagerWindow(Window, RecordableInterface):
             
             self.has_referential[datasource_name]['hasReferential'] = True
 
+            pts2d, points_mask = sample.project_pts(points, mask_fov=False, output_mask=True, undistorted=self.undistortimage)
+            all_points2D[output_ds_name] = pts2d
 
             if is_seg3D:
                 seg_sample = self.platform[output_ds_name].get_at_timestamp(cloud_sample.timestamp)
@@ -187,14 +187,17 @@ class ImagerWindow(Window, RecordableInterface):
                     print(f'Warning. The length ({seg_colors.shape[0]}) of the segmentation 3D data' \
                             +f'does not match the length ({points.shape[0]}) of the point cloud.')
                     continue
-
-                pts2d, points_mask = sample.project_pts(points, mask_fov=False, output_mask=True, undistorted=self.undistortimage)
-                all_points2D[output_ds_name] = pts2d
                 all_colors[output_ds_name] = seg_colors
 
                 if self.category_filter is not '':
                     points_mask &= seg_sample.mask_category(self.category_filter)
                 
+            elif '-rgb' in datasource_name: #TODO: generalize how colors are obtained from the sample
+                rgb_colors = np.ones((cloud_sample.raw.shape[0],4))
+                rgb_colors[:,0] = cloud_sample.raw['r']/255
+                rgb_colors[:,1] = cloud_sample.raw['g']/255
+                rgb_colors[:,2] = cloud_sample.raw['b']/255
+                all_colors[output_ds_name] = rgb_colors
 
             else:   
                 a_min, a_max = amplitudes.min(), amplitudes.max()
@@ -202,9 +205,6 @@ class ImagerWindow(Window, RecordableInterface):
                     norm = matplotlib.colors.LogNorm(1 + a_min, 1 + a_min + a_max)
                 else:
                     norm = matplotlib.colors.Normalize(amplitudes.min(), amplitudes.max())
-            
-                pts2d, points_mask = sample.project_pts(points, mask_fov=False, output_mask=True, undistorted=self.undistortimage)
-                all_points2D[output_ds_name] = pts2d
                 
                 if self.use_colors:
                     c = np.full((points.shape[0], 4), utils.to_numpy(QColor(self.ds_colors[datasource_name])))
