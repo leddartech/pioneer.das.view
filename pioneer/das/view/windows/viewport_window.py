@@ -257,6 +257,18 @@ class ViewportWindow(Window, RecordableInterface):
             if isinstance(pcl_sample, Echo):
                 package.variant = pcl_sample.masked
 
+    def _update_cursor(self, cursor, box):
+        def _update():
+            cursor.setProperty('visible', True)
+            c = box['c']
+            d = box['d']
+            r = box['r']
+            cursor.setProperty('c', f'({c[0]}, {c[1]}, {c[2]})')
+            cursor.setProperty('d', f'({d[0]}, {d[1]}, {d[2]})')
+            cursor.setProperty('r', f'({r[0]}, {r[1]}, {r[2]})')
+        
+        return _update
+
     def _draw_bounding_box_actors(self):
         ## Attemp to add Box in Viewer API
         ## WIP to have a better implementation
@@ -309,6 +321,8 @@ class ViewportWindow(Window, RecordableInterface):
 
                         bbox_actor, text_anchor = CustomActors.bbox(c, d, r, color=color, return_anchor=True)
                         bbox_actor.effect.lineWidth = 2
+
+                        bbox_actor.hovered.connect(self._update_cursor(actors['cursor'], box))
 
                         tf = linalg.tf_from_pos_euler(text_anchor)
 

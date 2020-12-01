@@ -164,7 +164,7 @@ DatasourceWindow {
             var m = {};
             for(var i = 0; i < bboxInstantiator_.count; i++) {
                 var a = bboxInstantiator_.objectAt(i);
-                m[a.objectName] = {hasReferential: a.hasReferential, actor: a};
+                m[a.objectName] = {hasReferential: a.hasReferential, actor: a, cursor: a.cursor};
             }
             return m;
         }
@@ -207,8 +207,8 @@ DatasourceWindow {
                         property var c: Connections {
                             target: actor_.echoActor
                             onHovered: {
-                                var point = worldOrigin.plus(worldDirection.times(tuv.x))
-                    
+                                var point = worldOrigin.plus(worldDirection.times(tuv.x));
+                                
                                 if (event.modifiers & Qt.ControlModifier) {
                                     if(line_.visible) {
                                         line_.to = point
@@ -247,13 +247,47 @@ DatasourceWindow {
             }
 
             Actors {
+                
                 instanciator: Instantiator {
                     id: bboxInstantiator_
                     model: component.bboxes3D
-                   
+                    
                     delegate: Actors {
+                        id: bbox_
                         objectName: modelData
+           
                         property bool hasReferential: true
+                        property var cursor: Rectangle {
+                            id: cursor_
+                            property string c: ''
+                            property string d: ''
+                            property string r: ''
+                            border.width : 1
+                            parent: viewport_
+                            
+                            visible:false
+                            onVisibleChanged: {
+                                if(visible)
+                                    cursorTimer_.start();
+                            }
+                            color: 'white'
+                            Column {
+                                id: column_
+                                anchors.fill: parent
+                                leftPadding: 5
+                                rightPadding: 5
+                                Label{text:' c: ' + cursor_.c}
+                                Label{text:' d: ' + cursor_.d}
+                                Label{text:' r: ' + cursor_.r}
+                            }
+                            width: column_.implicitWidth
+                            height: column_.implicitHeight
+                            Timer {
+                                id: cursorTimer_
+                                interval: 100
+                                onTriggered: cursor_.visible = false
+                            }
+                        }
                     }
                 }
             }
