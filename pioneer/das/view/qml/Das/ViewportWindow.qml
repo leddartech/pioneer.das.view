@@ -259,12 +259,13 @@ DatasourceWindow {
                         property bool hasReferential: true
                         property var cursor: Rectangle {
                             id: cursor_
-                            property string c: ''
-                            property string d: ''
-                            property string r: ''
+                            property string truncation: ''
+                            property string occlusion: ''
+                            property string vehicleActivity: ''
+                            property string onTheRoad: ''
                             border.width : 1
                             parent: viewport_
-                            
+                            y:25
                             visible:false
                             onVisibleChanged: {
                                 if(visible)
@@ -276,9 +277,10 @@ DatasourceWindow {
                                 anchors.fill: parent
                                 leftPadding: 5
                                 rightPadding: 5
-                                Label{text:' c: ' + cursor_.c}
-                                Label{text:' d: ' + cursor_.d}
-                                Label{text:' r: ' + cursor_.r}
+                                Label{visible: cursor_.truncation != ''; text: 'Truncation: ' + cursor_.truncation}
+                                Label{visible: cursor_.occlusion != ''; text: 'Occlusion: ' + cursor_.occlusion}
+                                Label{visible: cursor_.onTheRoad != ''; text: 'On the road: ' + cursor_.onTheRoad}
+                                Label{visible: cursor_.vehicleActivity != ''; text: 'Vehicle activity: ' + cursor_.vehicleActivity}
                             }
                             width: column_.implicitWidth
                             height: column_.implicitHeight

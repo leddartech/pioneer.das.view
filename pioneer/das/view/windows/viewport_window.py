@@ -257,15 +257,21 @@ class ViewportWindow(Window, RecordableInterface):
             if isinstance(pcl_sample, Echo):
                 package.variant = pcl_sample.masked
 
-    def _update_cursor(self, cursor, box):
+    def _update_cursor(self, cursor, attributes):
         def _update():
             cursor.setProperty('visible', True)
-            c = box['c']
-            d = box['d']
-            r = box['r']
-            cursor.setProperty('c', f'({c[0]}, {c[1]}, {c[2]})')
-            cursor.setProperty('d', f'({d[0]}, {d[1]}, {d[2]})')
-            cursor.setProperty('r', f'({r[0]}, {r[1]}, {r[2]})')
+            try:
+                occlusion = attributes['occlusions'] 
+                truncation = attributes['truncations']
+                on_the_road = attributes['on the road']
+                vehicle_activity = attributes['vehicle activities']
+
+                cursor.setProperty('occlusion', f'{occlusion}')
+                cursor.setProperty('truncation', f'{truncation}')
+                cursor.setProperty('onTheRoad', f'{on_the_road}')
+                cursor.setProperty('vehicleActivity', f'{vehicle_activity}')
+            except:
+                pass
         
         return _update
 
@@ -288,6 +294,7 @@ class ViewportWindow(Window, RecordableInterface):
 
                 raw = sample.raw
                 bbox = sample.mapto(self.ds_name, ignore_orientation=True)
+
                 mask = (bbox['flags'] >= 0)
 
                 if 'confidence' in raw:
@@ -303,6 +310,7 @@ class ViewportWindow(Window, RecordableInterface):
                         c = box['c']
                         d = box['d']
                         r = box['r']
+                        attributes = raw['attributes'][mask][i]
                         name, color = categories.get_name_color(box_source, box['classes'])
                         if self.controls.categoryFilter is not '':
                             if name not in self.controls.categoryFilter:
@@ -322,7 +330,7 @@ class ViewportWindow(Window, RecordableInterface):
                         bbox_actor, text_anchor = CustomActors.bbox(c, d, r, color=color, return_anchor=True)
                         bbox_actor.effect.lineWidth = 2
 
-                        bbox_actor.hovered.connect(self._update_cursor(actors['cursor'], box))
+                        bbox_actor.hovered.connect(self._update_cursor(actors['cursor'], attributes))
 
                         tf = linalg.tf_from_pos_euler(text_anchor)
 
