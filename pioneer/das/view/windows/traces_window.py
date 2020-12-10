@@ -300,7 +300,10 @@ class TracesWindow(Window):
         indices = coords_img_tf.flatten()
         amplitudes = np.max(traces_raw['data'], axis=1)[indices]
         distances = np.argmax(traces_raw['data'], axis=1)[indices]*traces_raw['distance_scaling']
-        distances += traces_raw['time_base_delays'][indices]
+        try:
+            distances += traces_raw['time_base_delays'][indices]
+        except:
+            distances += traces_raw['time_base_delays']
 
         raw = clouds.to_echo_package(
             indices = np.array(indices, 'u4'), 
