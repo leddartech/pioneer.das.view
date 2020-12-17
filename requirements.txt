@@ -5,8 +5,8 @@ tqdm
 pyyaml
 pandas
 opencv-python
-pioneer-common>=0.5
-pioneer-common-gui>=0.2
-pioneer-das-api>=0.5
+pioneer-common>=1.0
+pioneer-common-gui>=1.0
+pioneer-das-api>=1.0
 utm
 docopt
