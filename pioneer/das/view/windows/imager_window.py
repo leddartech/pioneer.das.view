@@ -334,9 +334,9 @@ class ImagerWindow(Window, RecordableInterface):
                             name = f"{name}({conf:.3f})"
 
                         vertices = linalg.bbox_to_8coordinates(box['c'],box['d'],box['r'])
-                        p, mask = sample.project_pts(vertices, mask_fov=False, output_mask=True, undistorted=self.undistortimage, margin=300)
+                        p, mask_fov = sample.project_pts(vertices, mask_fov=False, output_mask=True, undistorted=self.undistortimage, margin=300)
 
-                        if p[mask].shape[0] < 8:
+                        if p[mask_fov].shape[0] < 8:
                             continue
                         
                         faces = [[0,1,3,2],[0,1,5,4],[0,2,6,4],[7,3,1,5],[7,5,4,6],[7,6,2,3]]
