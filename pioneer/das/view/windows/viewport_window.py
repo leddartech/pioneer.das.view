@@ -265,11 +265,13 @@ class ViewportWindow(Window, RecordableInterface):
                 truncation = attributes['truncations']
                 on_the_road = attributes['on the road']
                 vehicle_activity = attributes['vehicle activities']
+                human_activity = attributes['human activities']
 
                 cursor.setProperty('occlusion', f'{occlusion}')
                 cursor.setProperty('truncation', f'{truncation}')
                 cursor.setProperty('onTheRoad', f'{on_the_road}')
                 cursor.setProperty('vehicleActivity', f'{vehicle_activity}')
+                cursor.setProperty('humanActivity', f'{human_activity}')
             except:
                 pass
         

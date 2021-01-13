@@ -262,6 +262,7 @@ DatasourceWindow {
                             property string truncation: ''
                             property string occlusion: ''
                             property string vehicleActivity: ''
+                            property string humanActivity: ''
                             property string onTheRoad: ''
                             border.width : 1
                             parent: viewport_
@@ -281,6 +282,7 @@ DatasourceWindow {
                                 Label{visible: cursor_.occlusion != ''; text: 'Occlusion: ' + cursor_.occlusion}
                                 Label{visible: cursor_.onTheRoad != ''; text: 'On the road: ' + cursor_.onTheRoad}
                                 Label{visible: cursor_.vehicleActivity != ''; text: 'Vehicle activity: ' + cursor_.vehicleActivity}
+                                Label{visible: cursor_.humanActivity != ''; text: 'Human activity: ' + cursor_.humanActivity}
                             }
                             width: column_.implicitWidth
                             height: column_.implicitHeight

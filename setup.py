@@ -13,11 +13,9 @@ install_reqs = parse_requirements('requirements.txt')
 
 setuptools.setup(
     name="pioneer_das_view", # Replace with your own username
-    version="1.0.0",
+    version="1.0.1",
     author="Leddartech",
     description="Leddartech's das view",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
     packages=[
         'pioneer',
         'pioneer.das',
@@ -39,5 +37,11 @@ setuptools.setup(
         "https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/488/packages/pypi/simple/pioneer-common-gui"
     ],
     install_requires=install_reqs,
-    include_package_data = True
+    include_package_data = True,
+    entry_points={
+        'console_scripts': [
+            'dasview = pioneer.das.view.apps.dasview:main',
+        ],
+    }
+    
 )

@@ -22,8 +22,7 @@ import os
 
 DEFAULT_IGNORE_LABELS = ['radarTI_bfc']
 
-if __name__ == "__main__":
-    
+def main():
     version = '0.1'
     args = docopt(__doc__, version = version)
 
@@ -41,7 +40,7 @@ if __name__ == "__main__":
       import os
       print('disable multi-threading')
       os.environ['QSG_RENDER_LOOP'] = "basic" #to set breakpoint in render thread...
-
+      
     print(r"""
  ______              ____   ____  _                     
 |_   _ `.           |_  _| |_  _|(_)                    
@@ -54,9 +53,11 @@ if __name__ == "__main__":
 
     os.environ['QSG_RENDER_LOOP'] = "basic" #to set breakpoint in render thread...
     pf = platform.Platform(path, default_cache_size=1)
-    v = Viewer(None, platform = pf)
+    v = Viewer(None, platform = pf, include=include, ignore=ignore, add_sync=add_sync, video_fps=video_fps)
     v.run()
 
+if __name__ == "__main__":
+    main()
 
 
 
