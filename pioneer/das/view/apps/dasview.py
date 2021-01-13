@@ -23,6 +23,7 @@ import os
 DEFAULT_IGNORE_LABELS = ['radarTI_bfc']
 
 def main():
+    import os
     version = '0.1'
     args = docopt(__doc__, version = version)
 
@@ -37,7 +38,7 @@ def main():
     video_fps = args['--video_fps']
 
     if args['--video_recording_enable']:
-      import os
+      
       print('disable multi-threading')
       os.environ['QSG_RENDER_LOOP'] = "basic" #to set breakpoint in render thread...
       
