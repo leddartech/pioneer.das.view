@@ -310,7 +310,11 @@ class ViewportWindow(Window, RecordableInterface):
                         c = box['c']
                         d = box['d']
                         r = box['r']
-                        attributes = raw['attributes'][mask][i]
+
+                        has_attributes = 'attributes' in raw
+                        if has_attributes:
+                            attributes = raw['attributes'][mask][i]
+
                         name, color = categories.get_name_color(box_source, box['classes'])
                         if self.controls.categoryFilter is not '':
                             if name not in self.controls.categoryFilter:
@@ -330,7 +334,8 @@ class ViewportWindow(Window, RecordableInterface):
                         bbox_actor, text_anchor = CustomActors.bbox(c, d, r, color=color, return_anchor=True)
                         bbox_actor.effect.lineWidth = 2
 
-                        bbox_actor.hovered.connect(self._update_cursor(actors['cursor'], attributes))
+                        if has_attributes:
+                            bbox_actor.hovered.connect(self._update_cursor(actors['cursor'], attributes))
 
                         tf = linalg.tf_from_pos_euler(text_anchor)
 
