@@ -10,7 +10,7 @@ from pioneer.das.api.datasources.virtual_datasources.voxel_map import VoxelMap
 from pioneer.das.view.windows import Window
 
 from matplotlib.patches import Rectangle, Polygon
-from matplotlib.collections import PolyCollection
+from matplotlib.collections import PatchCollection, PolyCollection
 from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QColor
 from PyQt5.QtQml import QQmlProperty
@@ -319,6 +319,9 @@ class ImagerWindow(Window, RecordableInterface):
                     mask = mask & (raw['confidence'] > self.conf_threshold)
 
                 if len(box3d[mask]) > 0:
+
+                    poly_collection = []
+                    color_collection = []
                     for i, box in enumerate(box3d[mask]):
 
                         name, color = categories.get_name_color(box_source, box['classes'])
@@ -334,7 +337,7 @@ class ImagerWindow(Window, RecordableInterface):
                             name = f"{name}({conf:.3f})"
 
                         vertices = linalg.bbox_to_8coordinates(box['c'],box['d'],box['r'])
-                        p, mask_fov = sample.project_pts(vertices, mask_fov=False, output_mask=True, undistorted=self.undistortimage, margin=300)
+                        p, mask_fov = sample.project_pts(vertices, mask_fov=False, output_mask=True, undistorted=self.undistortimage, margin=1000)
 
                         if p[mask_fov].shape[0] < 8:
                             continue
@@ -342,12 +345,18 @@ class ImagerWindow(Window, RecordableInterface):
                         faces = [[0,1,3,2],[0,1,5,4],[0,2,6,4],[7,3,1,5],[7,5,4,6],[7,6,2,3]]
                         for face in faces:
                             poly = np.vstack([p[face[0]],p[face[1]],p[face[2]],p[face[3]],p[face[0]]])
-                            patch = Polygon(poly, closed=True,linewidth=1,edgecolor=color,facecolor=list(color)+[0.075])
-                            self.ax.add_patch(patch)
+                            poly_collection.append(poly)
+                            color_collection.append(color)
 
                         if self.box_labels_size > 0:
                             txt = self.ax.text(p[:,0].min(),p[:,1].min(),name+':'+str(box['id']),color='w',fontweight='bold', fontsize=self.box_labels_size, clip_on=True)
                             txt.set_path_effects([PathEffects.withStroke(linewidth=1, foreground='k')])
+
+                    alpha = 0.05
+                    facecolors = [list(c)+[alpha] for c in color_collection]
+                    poly_collection = PolyCollection(poly_collection, linewidths=0.5, edgecolors=color_collection, facecolors=facecolors)
+                    self.ax.add_collection(poly_collection)
+
 
 
     def __update_lanes(self, sample, image):
