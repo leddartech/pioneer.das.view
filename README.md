@@ -2,20 +2,18 @@
 
 pioneer.das.view is a python application used to visualize leddartech's datasets.
 
+## Pixset Dataset
+[Pixset](dataset.leddartech.com) is the first dataset using the leddartech Pixell sensor. A solid state flash LiDAR that can provide full wave-form data. All the annotated frames of the dataset have been recorded in Montreal and Quebec city under various environmental conditions. 
+
+A full description of the Pixset dataset can be found here: []()
+
+We've also published a set of tools to help users in manipulating the dataset data. The das.view can be used to visualize and compared the data from different sensors in a Leddartech's dataset.
+
+
 ## Installation
 
-Before installing, you should add to your pip.conf file the gitlab pypi server url to trust.
+The pioneer.das.view can be installed using the package manager pip.
 
-```conf
-[global]
-extra-index-url = https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/481/packages/pypi/simple
-                  https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/487/packages/pypi/simple
-                  https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/488/packages/pypi/simple
-                  https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/493/packages/pypi/simple
-trusted-host = svleddar-gitlab.leddartech.local
-```
-
-Use the package manager [pip](https://pioneer:yK6RUkhUCNHg3e1yxGT4@svleddar-gitlab.leddartech.local/api/v4/projects/493/packages/pypi/simple/pioneer-das-view) to install pioneer.das.view .
 
 ```bash
 pip install pioneer-das-view
@@ -35,10 +33,8 @@ pipenv shell
 
 ## Usage
 
-```python
-pipenv install --skip-lock
-
-pipenv run python ./pioneer/das/view/apps/dasview.py /path/to/dataset
+```bash
+dasview /path/to/dataset
 
 ```
 
