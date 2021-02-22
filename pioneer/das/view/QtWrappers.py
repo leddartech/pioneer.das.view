@@ -370,10 +370,11 @@ class DasSampleToCloud(Array.ArrayDouble3):
             
         elif self._method == "point_cloud":
             amp = sample.amplitudes
+            amp_order = np.argsort(amp)
             nb_points = np.max([1, int(amp.shape[0] * self._amplitudeRatio / 100.0)])
-            self.set_ndarray(rv[-nb_points:])
-            self._amplitudes.set_ndarray(amp[-nb_points:])
-            self._indices.set_ndarray(np.arange(rv[-nb_points:].shape[0], dtype = np.uint32))
+            self.set_ndarray(rv[amp_order][-nb_points:])
+            self._amplitudes.set_ndarray(amp[amp_order][-nb_points:])
+            self._indices.set_ndarray(np.arange(rv[amp_order][-nb_points:].shape[0], dtype = np.uint32))
             if self._logScale and np.min(self._amplitudes.ndarray)< 0 :
                 self._amplitudes.set_ndarray(self._amplitudes.ndarray - np.min(self._amplitudes.ndarray))
             self._normalize_amplitudes()
