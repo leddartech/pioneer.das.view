@@ -3,7 +3,7 @@
 pioneer.das.view is a python application used to visualize leddartech's datasets.
 
 ## Pixset Dataset
-[Pixset](dataset.leddartech.com) is the first dataset using the leddartech Pixell sensor. A solid state flash LiDAR that can provide full wave-form data. All the annotated frames of the dataset have been recorded in Montreal and Quebec city under various environmental conditions. 
+[Pixset](https://leddartech.com/dataset) is the first dataset using the leddartech Pixell sensor. A solid state flash LiDAR that can provide full wave-form data. All the annotated frames of the dataset have been recorded in Montreal and Quebec city under various environmental conditions. 
 
 A full description of the Pixset dataset can be found here: []()
 
