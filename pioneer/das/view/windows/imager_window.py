@@ -325,8 +325,10 @@ class ImagerWindow(Window, RecordableInterface):
                     for i, box in enumerate(box3d[mask]):
 
                         name, color = categories.get_name_color(box_source, box['classes'])
-                        if self.category_filter is not '' and name not in self.category_filter:
-                            break
+
+                        if self.category_filter is not '':
+                            if name not in self.category_filter:
+                                continue
 
                         color = np.array(color)/255
                         if self.use_box_colors:
