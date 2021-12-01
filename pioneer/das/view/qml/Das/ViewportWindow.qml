@@ -186,7 +186,7 @@ DatasourceWindow {
             Actors {
                 instanciator: Instantiator {
                     id: pclInstanciator_
-                    model: component.viewports.filter(function(ds){return ds.includes("_ech") || ds.includes("_xyzit") || ds.includes("_xyzvcfar");});
+                    model: component.viewports.filter(function(ds){return ds.includes("_ech") || ds.includes("_xyzit") || ds.includes("_xyzvcfar") || ds.includes("_xyzvi");});
                     
                     delegate: LidarActor {
                         id: actor_

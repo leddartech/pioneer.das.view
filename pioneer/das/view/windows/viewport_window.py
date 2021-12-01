@@ -89,7 +89,7 @@ class ViewportWindow(Window, RecordableInterface):
             self.controls.voxelSizeText = str(self.platform[self.ds_name].voxel_size)
             self.controls.voxelSize = float(np.log10(self.platform[self.ds_name].voxel_size))
 
-        if 'radarTI_bfc' in self.platform._sensors.keys():
+        if 'radar' in self.platform._sensors.keys():
             self.controls.amplitudeTypeVisible = True
 
         self._update()
@@ -236,6 +236,9 @@ class ViewportWindow(Window, RecordableInterface):
 
             elif f'{ds_name}_{pos}_xyzvcfar' in self.viewport.pclActors:
                 pcl_ds = f'{ds_name}_{pos}_xyzvcfar'
+                cloud.method = 'point_cloud'
+            elif f'{ds_name}_{pos}_xyzvi' in self.viewport.pclActors:
+                pcl_ds = f'{ds_name}_{pos}_xyzvi'
                 cloud.method = 'point_cloud'
 
             pcl_sample = self._get_sample(pcl_ds)
