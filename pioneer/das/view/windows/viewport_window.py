@@ -360,16 +360,16 @@ class ViewportWindow(Window, RecordableInterface):
 
     def _draw_lane_actors(self):
 
-        # TODO: transform to referential
-
         for datasource, actors in self.viewport.laneActors.items():
             actors['actor'].clearActors()
             if not self.controls.showLanes[datasource]:
                 continue
 
             sample = self._get_sample(datasource)
+
             for lane in sample.raw:
                 infos = lane_types.LANE_TYPES[lane['type']]
-                lane_actor = CustomActors.lane(lane['vertices'], color=QColor.fromRgb(*infos['color']),
+                vertices = sample.transform(lane['vertices'], self.ds_name)
+                lane_actor = CustomActors.lane(vertices, color=QColor.fromRgb(*infos['color']),
                                                double=infos['double'], dashed=infos['dashed'])
                 actors['actor'].addActor(lane_actor)
