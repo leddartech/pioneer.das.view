@@ -325,10 +325,8 @@ class ImagerWindow(Window, RecordableInterface):
                     for i, box in enumerate(box3d[mask]):
 
                         name, color = categories.get_name_color(box_source, box['classes'])
-
-                        if self.category_filter is not '':
-                            if name not in self.category_filter:
-                                continue
+                        if self.category_filter is not '' and name not in self.category_filter:
+                            break
 
                         color = np.array(color)/255
                         if self.use_box_colors:
@@ -402,7 +400,8 @@ class ImagerWindow(Window, RecordableInterface):
             self.scatter.set_array(np.empty((0,), 'f4'))
             self.scatter.set_sizes(np.empty((0,), 'f4'))
             self.scatter = None
-        self.ax.collections = []
+        for collection in self.ax.collections:
+            self.ax.collections.remove(collection)
 
 
     def __draw(self, image):
