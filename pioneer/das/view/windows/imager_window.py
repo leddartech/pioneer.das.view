@@ -368,7 +368,7 @@ class ImagerWindow(Window, RecordableInterface):
         for ds_name in datasources:
             lane_sample = self.platform[ds_name].get_at_timestamp(sample.timestamp)
 
-            for lane in lane_sample.raw:
+            for lane in lane_sample.raw['data']:
 
                 vertices = lane_sample.transform(lane['vertices'], self.datasource, ignore_orientation=True)
                 projected_lane = sample.project_pts(vertices, undistorted=self.undistortimage, mask_fov=True, margin=300) 

@@ -367,7 +367,7 @@ class ViewportWindow(Window, RecordableInterface):
 
             sample = self._get_sample(datasource)
 
-            for lane in sample.raw:
+            for lane in sample.raw['data']:
                 infos = lane_types.LANE_TYPES[lane['type']]
                 vertices = sample.transform(lane['vertices'], self.ds_name)
                 lane_actor = CustomActors.lane(vertices, color=QColor.fromRgb(*infos['color']),
