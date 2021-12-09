@@ -379,7 +379,7 @@ class ImagerWindow(Window, RecordableInterface):
 
                 color = np.array(infos['color'])/255
 
-                width = 5
+                width = 1
                 offset = width if infos['double'] else 0
                 nb_lanes = 2 if infos['double'] else 1
 
