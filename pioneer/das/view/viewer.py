@@ -104,7 +104,7 @@ class Viewer(object):
         , seg3D = sorted(self.pf.expand_wildcards(['*_seg3d-*']))
         , lanes = sorted(self.pf.expand_wildcards(['*_lane-*']))
         , viewports = sorted(self.pf.expand_wildcards(['*_ech*', '*_xyzit', '*xyzit-*', '*_xyzvcfar*', '*_xyzvi*']))
-        , scalars = sorted(self.pf.expand_wildcards(['sbgekinox_*', 'peakcan_*','encoder_*','mti_*','carlagps_*', 'carlaimu_*','imu_*','gps_*', 'bench_*',]))
+        , scalars = sorted(self.pf.expand_wildcards(['sbgekinox_*', 'peakcan_*','encoder_*','mti_*','carlagps_*', 'carlaimu_*','imu_*','gps_*', 'bench_*', '*_scalars']))
         , traces = sorted(self.pf.expand_wildcards(['*_trr*', '*_trf*','*_ftrr*']))
         , sensors = self.sensors
         , datasources = self.datasources

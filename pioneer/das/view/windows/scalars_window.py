@@ -44,6 +44,7 @@ class ScalarsWindow(Window):
         self.add_connection(self.window.markersChanged.connect(self._update))
         self.add_connection(self.window.startTimeChanged.connect(self._update))
         self.add_connection(self.window.endTimeChanged.connect(self._update))
+        self.add_connection(self.window.showAllDatasetChanged.connect(self._update))
         self._update()
     
     def _update(self):
@@ -51,15 +52,14 @@ class ScalarsWindow(Window):
         cursor = int(self.window['cursor'])
         sample = self.datasource[cursor]
         
-        try:
-            indices = self.datasource.get_timestamp_slice(
-                sample.timestamp, 
-                (int(float(self.window.startTime)*1e6), int(float(self.window.endTime)*1e6))
-            )
-        except:
-            return
+        if self.window.showAllDataset:
+            indices = range(0, len(self.datasource))
+        else:
+            start_index = self.datasource.get_at_timestamp(float(sample.timestamp) + float(self.window.startTime)*1e6).index
+            final_index = self.datasource.get_at_timestamp(float(sample.timestamp) + float(self.window.endTime)*1e6).index
+            indices = range(start_index, final_index)
 
-        del self.ax.lines[:]
+        self.ax.clear()
 
         show_column = self.window.showColumn
         markers = 'o' if self.window.markers else ''
@@ -76,8 +76,13 @@ class ScalarsWindow(Window):
                     scalars = np.array([s.raw[column_name] for s in scalar_samples])
                 min_y = min(min_y, scalars.min())
                 max_y = max(max_y, scalars.max())
+                if min_y == max_y: max_y += 1
                 times = (self.datasource.timestamps[indices].astype('f8') - sample.timestamp)/1e6
                 self.ax.plot(times, scalars, marker=markers, label=column_name, color=self.colors[column_name])
+
+                time_zero_index = np.argmin(np.abs(times))
+                self.ax.scatter(times[time_zero_index], scalars[time_zero_index], color=self.colors[column_name])
+
                 has_legend = True
         
         self.ax.set_ylim([min_y,max_y])

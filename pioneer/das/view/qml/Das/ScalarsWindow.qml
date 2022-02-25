@@ -9,11 +9,12 @@ DatasourceWindow {
     id: component
 
     ////// python API
-    property var columnNames          : []
-    property var showColumn           : ({})
-    readonly property alias markers   : markers_.checked
-    property alias startTime          : startTime_.text
-    property alias endTime            : endTime_.text
+    property var columnNames                   : []
+    property var showColumn                    : ({})
+    readonly property alias markers            : markers_.checked
+    property alias startTime                   : startTime_.text
+    property alias endTime                     : endTime_.text
+    readonly property alias showAllDataset     : showAllDataset_.checked
     ///////////////////////////////
 
     RowLayout {
@@ -31,6 +32,11 @@ DatasourceWindow {
             text: '5'
         }
         Text {text: 'seconds'}
+        SmallCheckBox {
+            id: showAllDataset_
+            text: "Show all dataset"
+            checked: false
+        }
     }
 
     RowLayout {
