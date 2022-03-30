@@ -44,7 +44,7 @@ def main():
     add_sync = args['--add_sync'].split(',')
     add_sync = None if add_sync==[''] else int(add_sync)
     video_fps = args['--video_fps']
-    use_logger = args['--log'] or args['-l']
+    use_logger = args['--log']
 
     if args['--video_recording_enable']:
       
