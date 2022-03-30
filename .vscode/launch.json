@@ -4,14 +4,24 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["/nas/temp/20201026_152953_rec_dataset_exported"]
-        }
+            "args": [
+                "/nas/temp/20201026_152953_rec_dataset_exported"
+            ]
+        },
+        {
+            "name": "Python: Program dasview",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/pioneer/das/view/apps/dasview.py",
+            "args": [
+                "/nas/pixset/annotatedDataset/20200805_002607_part48_2083_2282"
+            ]
+        },
     ]
 }
