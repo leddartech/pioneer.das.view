@@ -13,7 +13,7 @@ install_reqs = parse_requirements('requirements.txt')
 
 setuptools.setup(
     name="pioneer_das_view", # Replace with your own username
-    version="1.3.0",
+    version="1.3.1",
     author="Leddartech",
     description="Leddartech's das view",
     packages=[

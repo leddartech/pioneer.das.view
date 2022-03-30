@@ -27,7 +27,7 @@ DEFAULT_IGNORE_LABELS = ['radarTI_bfc']
 
 def main():
     import os
-    version = '0.1'
+    version = '1.3.1'
 
     try:
       args = docopt.docopt(__doc__, version = f'dasview {version}')
