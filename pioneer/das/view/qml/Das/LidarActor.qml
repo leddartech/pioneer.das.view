@@ -17,7 +17,6 @@ Actors {
     property alias minAmplitude : cloud_.minAmplitude 
     property alias maxAmplitude : cloud_.maxAmplitude 
     property alias amplitudeRatio : cloud_.amplitudeRatio 
-    property alias amplitudeType : cloud_.amplitudeType
     property alias referential  : cloud_.referential
     property alias undistort    : cloud_.undistort
     property alias method       : cloud_.method

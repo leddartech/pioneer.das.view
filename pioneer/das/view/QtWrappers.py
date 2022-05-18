@@ -230,7 +230,7 @@ class DasSampleToCloud(Array.ArrayDouble3):
         self._amplitudeRatio = 100
 
         #call setters:
-        self.method = 'point_cloud'
+        self.method = 'get_point_cloud'
         self.sample = Product.VariantProduct()
         self.seg3DSample = Product.VariantProduct()
 
@@ -249,10 +249,10 @@ class DasSampleToCloud(Array.ArrayDouble3):
 
 
     def cb_method(self):
-        if self._method not in ['point_cloud', 'quad_cloud']:
+        if self._method not in ['get_point_cloud', 'quad_cloud']:
             raise RuntimeError(f"Unexpected method: {self._method}")
 
-        self.set_primitiveType(self, Geometry.PrimitiveType.POINTS if self._method == 'point_cloud' else Geometry.PrimitiveType.TRIANGLES)
+        self.set_primitiveType(self, Geometry.PrimitiveType.POINTS if self._method == 'get_point_cloud' else Geometry.PrimitiveType.TRIANGLES)
     
     Product.InputProperty(vars(), str, 'method', cb_method)
 
@@ -261,8 +261,6 @@ class DasSampleToCloud(Array.ArrayDouble3):
     Product.InputProperty(vars(), float, 'maxAmplitude')
 
     Product.InputProperty(vars(), float, 'amplitudeRatio')
-
-    Product.InputProperty(vars(), str, 'amplitudeType')
 
     Product.InputProperty(vars(), bool, 'logScale')
 
@@ -368,9 +366,23 @@ class DasSampleToCloud(Array.ArrayDouble3):
             self._indices.set_ndarray(i)
             self._normalize_amplitudes()
             
-        elif self._method == "point_cloud":
-            amp = sample.amplitudes
-            nb_points = np.max([1, int(amp.shape[0] * self._amplitudeRatio / 100.0)])
+        elif self._method == "get_point_cloud":
+
+            # Choose which field is used to color the point cloud
+            candidates = [f for f in sample.fields if f not in ['x', 'y', 'z']]
+            if isinstance(sample.datasource.sensor, sensors.Lidar) and 'i' in candidates:
+                color_from_field = 'i'
+            elif len(candidates) > 0:
+                color_from_field = candidates[0]
+            else:
+                color_from_field = None
+            
+            if color_from_field is not None:
+                amp = sample.get_field(color_from_field)
+                nb_points = np.max([1, int(amp.shape[0] * self._amplitudeRatio / 100.0)])
+            else:
+                amp = np.ones(sample.size)
+                nb_points = sample.size
 
             if self._amplitudeRatio < 100.0:
                 amp_order = np.argsort(amp)

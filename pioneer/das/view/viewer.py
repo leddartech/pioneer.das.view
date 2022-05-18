@@ -1,5 +1,5 @@
 from pioneer.common import platform as platform_utils
-from pioneer.common.gui import interactive, CustomActors, utils
+from pioneer.common.gui import interactive, utils
 from pioneer.common.gui.qml import backend_qtquick5
 from pioneer.das.api.platform import Platform
 from pioneer.das.view import QMLDIR
@@ -12,7 +12,7 @@ import os
 import os.path
 
 DEFAULT_SYNC_LABELS = ['*ech*', '*_img*', '*_flimg*', '*_trr*', '*_trf*', '*_ftrr*']
-DEFAULT_INTERP_LABELS = ['*_xyzit*', '*_xyzvcfar*', '*_xyzvi*', 'sbgekinox_*', 'peakcan_*', '*temp', '*_pos*', '*_agc*', '*_rpm', '*_ago']
+DEFAULT_INTERP_LABELS = ['*_xyzit*', '*_xyzvcfar*', '*_xyzvi*', 'sbgekinox_*', 'peakcan_*', '*temp', '*_pos*', '*_agc*', '*_ago']
 
 DEFAULT_IGNORE_LABELS = ['radarTI_bfc_rtr', 'radarTI_bfc_rec']
 DEFAULT_TOLERANCE = 2e3 #2 ms
@@ -104,7 +104,7 @@ class Viewer(object):
         , seg3D = sorted(self.pf.expand_wildcards(['*_seg3d-*']))
         , lanes = sorted(self.pf.expand_wildcards(['*_lane-*']))
         , viewports = sorted(self.pf.expand_wildcards(['*_ech*', '*_xyzit', '*xyzit-*', '*_xyzvcfar*', '*_xyzvi*']))
-        , scalars = sorted(self.pf.expand_wildcards(['sbgekinox_*', 'peakcan_*','encoder_*','mti_*','carlagps_*', 'carlaimu_*','imu_*','gps_*', 'bench_*', '*_scalars']))
+        , scalars = sorted(self.pf.expand_wildcards(['sbgekinox_*', 'peakcan_*','mti_*','carlagps_*', 'carlaimu_*','imu_*','gps_*', 'bench_*', '*_scalars']))
         , traces = sorted(self.pf.expand_wildcards(['*_trr*', '*_trf*','*_ftrr*']))
         , sensors = self.sensors
         , datasources = self.datasources

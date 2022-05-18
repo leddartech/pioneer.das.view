@@ -3,14 +3,16 @@ from pioneer.common.platform import parse_datasource_name
 from pioneer.common.gui import utils
 from pioneer.common.video import VideoRecorder, RecordableInterface
 from pioneer.das.api import categories, lane_types
-from pioneer.das.api.platform import Platform
-from pioneer.das.api.samples import ImageFisheye, ImageCylinder, Echo
+from pioneer.das.api.samples import Echo
+from pioneer.das.api.samples.annotations.box_2d import Box2d
+from pioneer.das.api.samples.annotations.box_3d import Box3d
+from pioneer.das.api.samples.image import Image
+from pioneer.das.api.samples.point_cloud import PointCloud
 from pioneer.das.api.sensors import Sensor
-from pioneer.das.api.datasources.virtual_datasources.voxel_map import VoxelMap
 from pioneer.das.view.windows import Window
 
 from matplotlib.patches import Rectangle, Polygon
-from matplotlib.collections import PatchCollection, PolyCollection
+from matplotlib.collections import PolyCollection
 from PyQt5.QtCore import QObject
 from PyQt5.QtGui import QColor
 from PyQt5.QtQml import QQmlProperty
@@ -19,7 +21,6 @@ import matplotlib
 import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt
 import numpy as np
-
 
 
 
@@ -42,11 +43,7 @@ class ImagerWindow(Window, RecordableInterface):
 
     def connect(self):
 
-        if self.platform.is_live():
-            self.platform[self.datasource].ds.connect(self.update)    
-        else:
-            self.add_connection(self.window.cursorChanged.connect(self.update))
-        
+        self.add_connection(self.window.cursorChanged.connect(self.update))
         self.add_connection(self.window.visibleChanged.connect(self.update))
 
         controls = self.window.controls
@@ -72,31 +69,23 @@ class ImagerWindow(Window, RecordableInterface):
         self.add_connection(controls.cropRightChanged.connect(self.update_aspect_ratio))
         self.add_connection(controls.cropTopChanged.connect(self.update_aspect_ratio))
         self.add_connection(controls.cropBottomChanged.connect(self.update_aspect_ratio))
-        self.add_connection(controls.submitVoxelMapMemory.clicked.connect(self.update_voxel_map))
-        self.add_connection(controls.voxelSizeChanged.connect(self.update_voxel_map))
 
         self.update()
 
     def update(self):
-        if not self.window.isVisible():
-            return
+        if not self.window.isVisible(): return
 
         self.__read_qml_properties()
 
-        cursor = -1 if self.platform.is_live() else int(self.cursor)
+        cursor = int(self.cursor)
 
-        sample = self.platform[self.datasource][cursor]
-        if self.undistortimage:
-            image = sample.undistort_image()
-        else:
-            image = sample.raw_image()
+        sample:Image = self.platform[self.datasource][cursor]
+        image = sample.get_image(undistort = self.undistortimage)
 
         self.__update_actors(sample, image)
-
-        box = None
-        self.__update_box2D(sample, image, box)
+        self.__update_box2D(sample, image)
         self.__update_seg_2d(sample, image)
-        self.__update_bbox_3d(sample, image, box)
+        self.__update_bbox_3d(sample)
         self.__update_lanes(sample, image)
 
         self.__draw(image)
@@ -106,18 +95,6 @@ class ImagerWindow(Window, RecordableInterface):
         im = self.ax.get_images()
         extent =  im[0].get_extent()
         self.ax.set_aspect(abs((extent[1]-extent[0])/(extent[3]-extent[2]))/self.aspect_ratio)
-        self.update()
-
-    def update_voxel_map(self):
-        datasources = [ds_name for ds_name, show in dict(self.show_actor, **dict(self.show_seg_3d)).items() if show]
-        for datasource in datasources:
-            if isinstance(self.platform[datasource], VoxelMap):
-                self.platform[datasource].clear_cache()
-                self.platform[datasource].memory = int(self.window.controls.voxelMapMemory)
-                self.platform[datasource].skip = int(self.window.controls.voxelMapSkip)
-                self.platform[datasource].voxel_size = 10**float(self.window.controls.voxelSize)
-                self.window.controls.voxelSizeText = f'{self.platform[datasource].voxel_size:.2f}'
-                self.platform[datasource].invalidate_caches()
         self.update()
 
     
@@ -164,8 +141,20 @@ class ImagerWindow(Window, RecordableInterface):
             cloud_sample = self.__get_sample(sample, datasource_name)
 
             try:
-                points, amplitudes, indices = cloud_sample.get_cloud(referential = self.datasource, undistort = self.undistort, reference_ts = int(sample.timestamp), dtype=np.float64)
-                
+
+                if isinstance(cloud_sample, PointCloud):
+
+                    points = cloud_sample.get_point_cloud(referential = self.datasource, undistort = self.undistort, reference_ts = int(sample.timestamp), dtype=np.float64)
+                    amplitudes = cloud_sample.get_field('i')
+
+                    # FIXME: dirty hack to get a valid field from a PointCloud without 'i' in its fields (radars)
+                    if amplitudes is None:
+                        amplitudes = np.clip(cloud_sample.get_field(cloud_sample.fields[3]), 0.01, np.inf)
+
+                    indices = np.arange(cloud_sample.size)
+
+                elif isinstance(cloud_sample, Echo):
+                    points, amplitudes, indices = cloud_sample.get_cloud(referential = self.datasource, undistort = self.undistort, reference_ts = int(sample.timestamp), dtype=np.float64)           
 
             except Sensor.NoPathToReferential as e:
                 self.has_referential[datasource_name]['hasReferential'] = False
@@ -193,10 +182,10 @@ class ImagerWindow(Window, RecordableInterface):
                     points_mask &= seg_sample.mask_category(self.category_filter)
                 
             elif '-rgb' in datasource_name: #TODO: generalize how colors are obtained from the sample
-                rgb_colors = np.ones((cloud_sample.raw.shape[0],4))
-                rgb_colors[:,0] = cloud_sample.raw['r']/255
-                rgb_colors[:,1] = cloud_sample.raw['g']/255
-                rgb_colors[:,2] = cloud_sample.raw['b']/255
+                rgb_colors = np.ones((cloud_sample.size,4))
+                rgb_colors[:,0] = cloud_sample.get_field('r')/255
+                rgb_colors[:,1] = cloud_sample.get_field('g')/255
+                rgb_colors[:,2] = cloud_sample.get_field('b')/255
                 all_colors[output_ds_name] = rgb_colors
 
             else:   
@@ -234,46 +223,52 @@ class ImagerWindow(Window, RecordableInterface):
             else:
                 self.scatter = self.ax.scatter(points2d[:, 0], points2d[:, 1], s=self.point_size, c=colors)
 
-        try: #remove all previous 2D and 3D boxes
-            [p.remove() for p in reversed(self.ax.patches)]
-            [p.remove() for p in reversed(self.ax.texts)]
-        except:
-            pass
+        # try: #remove all previous 2D and 3D boxes
+        [p.remove() for p in reversed(self.ax.collections)]
+        [p.remove() for p in reversed(self.ax.patches)]
+        [p.remove() for p in reversed(self.ax.texts)]
 
 
-    def __update_box2D(self, sample, image, box):
-        datasources = [ds_name for ds_name, show in self.show_bbox_2d.items() if show]
-        for ds_name in datasources:
-            _, _, ds_type = parse_datasource_name(ds_name)
-            box_source = categories.get_source(ds_type)
+    def __update_box2D(self, sample, image):
 
-            box2d_sample = self.platform[ds_name].get_at_timestamp(sample.timestamp)
-            if np.abs(np.int64(sample.timestamp) - box2d_sample.timestamp) <= 1e6:
-                raw = box2d_sample.raw
-                if 'confidence' in raw:
-                    mask = (raw['confidence'] > self.conf_threshold)
-                    box2d = raw['data'][mask]
-                else:
-                    box2d = raw['data']
-                if len(box2d) > 0:
-                    for i, box in enumerate(box2d):
-                        top = (box['x']-box['h']/2)*image.shape[0]
-                        left = (box['y']-box['w']/2)*image.shape[1]
-                        name, color = categories.get_name_color(box_source,box['classes'])
-                        if self.category_filter is not '':
-                            if name not in self.category_filter:
-                                continue
-                        color = np.array(color)/255
-                        if self.use_box_colors:
-                            color = utils.to_numpy(QColor(self.box_2d_colors[ds_name]))[:3]
-                        if 'confidence' in raw:
-                            conf = raw['confidence'][mask][i]
-                            name = f"{name}({conf:.3f})"
-                        rect = Rectangle((left,top),box['w']*image.shape[1],box['h']*image.shape[0],linewidth=1,edgecolor=color,facecolor=list(color)+[0.15]) 
-                        self.ax.add_patch(rect)
-                        if self.box_labels_size > 0:
-                            txt = self.ax.text(left,top,name+':'+str(box['id']),color='w',fontweight='bold', fontsize=self.box_labels_size, clip_on=True)
-                            txt.set_path_effects([PathEffects.withStroke(linewidth=1, foreground='k')])
+        for ds_name, show in self.show_bbox_2d.items():
+            if not show: continue
+
+            box_source = categories.get_source(parse_datasource_name(ds_name)[2])
+            box2d:Box2d = self.platform[ds_name].get_at_timestamp(sample.timestamp)
+            if np.abs(float(box2d.timestamp) - float(sample.timestamp)) > 1e6: continue
+            category_numbers = box2d.get_category_numbers()
+
+            for box_index in range(len(box2d)):
+
+                center = box2d.get_centers()[box_index]
+                dimension = box2d.get_dimensions()[box_index]
+                confidence = box2d.get_confidences()[box_index]
+                category_name, color = categories.get_name_color(box_source, category_numbers[box_index])
+                id = box2d.get_ids()[box_index]
+
+                if confidence:
+                    if confidence < self.conf_threshold: continue
+
+                if self.category_filter is not '': 
+                    if category_name not in self.category_filter: continue
+
+                color = np.array(color)/255
+                if self.use_box_colors:
+                    color = utils.to_numpy(QColor(self.box_3d_colors[ds_name]))[:3]
+
+                top = (center[0]-dimension[0]/2)*image.shape[0]
+                left = (center[1]-dimension[1]/2)*image.shape[1]
+
+                rect = Rectangle((left,top), dimension[1]*image.shape[1], dimension[0]*image.shape[0], linewidth=1, edgecolor=color, facecolor=list(color)+[0.15]) 
+                self.ax.add_patch(rect)
+
+                if self.box_labels_size > 0:
+                    text_label = category_name
+                    if id: text_label += f" {id}"
+                    if confidence: text_label += f" ({int(confidence*100)}%)"
+                    txt = self.ax.text(left, top, text_label, color='w', fontweight='bold', fontsize=self.box_labels_size, clip_on=True)
+                    txt.set_path_effects([PathEffects.withStroke(linewidth=1, foreground='k')])
 
 
     def __update_seg_2d(self, sample, image):
@@ -301,62 +296,60 @@ class ImagerWindow(Window, RecordableInterface):
                     self.ax.add_patch(patch)
 
 
-    def __update_bbox_3d(self, sample, image, box):
-        datasources = [ds_name for ds_name, show in self.show_bbox_3d.items() if show]
-        for ds_name in datasources:
-            _, _, ds_type = parse_datasource_name(ds_name)
-            box_source = categories.get_source(ds_type)
-            if box_source not in categories.CATEGORIES: #FIXME: this should not be here
-                box_source = 'deepen'
+    def __update_bbox_3d(self, sample:Image):
 
-            box3d_sample = self.platform[ds_name].get_at_timestamp(sample.timestamp)
-            if np.abs(np.int64(sample.timestamp) - box3d_sample.timestamp) <= 1e6:
-                raw = box3d_sample.raw
-                box3d = box3d_sample.mapto(self.datasource, ignore_orientation=True)
-                mask = (box3d['flags'] >= 0)
+        for ds_name, show in self.show_bbox_3d.items():
+            if not show: continue
 
-                if 'confidence' in raw:
-                    mask = mask & (raw['confidence'] > self.conf_threshold)
+            box_source = categories.get_source(parse_datasource_name(ds_name)[2])
+            box3d_sample:Box3d = self.platform[ds_name].get_at_timestamp(sample.timestamp)
+            if np.abs(float(box3d_sample.timestamp) - float(sample.timestamp)) > 1e6: continue
+            box3d = box3d_sample.set_referential(self.datasource, ignore_orientation=True)
+            category_numbers = box3d.get_category_numbers()
 
-                if len(box3d[mask]) > 0:
+            poly_collection = []
+            color_collection = []
 
-                    poly_collection = []
-                    color_collection = []
-                    for i, box in enumerate(box3d[mask]):
+            for box_index in range(len(box3d)):
 
-                        name, color = categories.get_name_color(box_source, box['classes'])
-                        if self.category_filter is not '' and name not in self.category_filter:
-                            break
+                center = box3d.get_centers()[box_index]
+                dimension = box3d.get_dimensions()[box_index]
+                rotation = box3d.get_rotations()[box_index]
+                confidence = box3d.get_confidences()[box_index]
+                category_name, color = categories.get_name_color(box_source, category_numbers[box_index])
+                id = box3d.get_ids()[box_index]
 
-                        color = np.array(color)/255
-                        if self.use_box_colors:
-                            color = utils.to_numpy(QColor(self.box_3d_colors[ds_name]))[:3]
+                if confidence:
+                    if confidence < self.conf_threshold: continue
 
-                        if 'confidence' in raw:
-                            conf = raw['confidence'][mask][i]
-                            name = f"{name}({conf:.3f})"
+                if self.category_filter is not '': 
+                    if category_name not in self.category_filter: continue
 
-                        vertices = linalg.bbox_to_8coordinates(box['c'],box['d'],box['r'])
-                        p, mask_fov = sample.project_pts(vertices, mask_fov=False, output_mask=True, undistorted=self.undistortimage, margin=1000)
+                color = np.array(color)/255
+                if self.use_box_colors:
+                    color = utils.to_numpy(QColor(self.box_3d_colors[ds_name]))[:3]
 
-                        if p[mask_fov].shape[0] < 8:
-                            continue
-                        
-                        faces = [[0,1,3,2],[0,1,5,4],[0,2,6,4],[7,3,1,5],[7,5,4,6],[7,6,2,3]]
-                        for face in faces:
-                            poly = np.vstack([p[face[0]],p[face[1]],p[face[2]],p[face[3]],p[face[0]]])
-                            poly_collection.append(poly)
-                            color_collection.append(color)
+                vertices = linalg.bbox_to_8coordinates(center, dimension, rotation)
+                p, mask_fov = sample.project_pts(vertices, mask_fov=False, output_mask=True, undistorted=self.undistortimage, margin=1000)
+                if p[mask_fov].shape[0] < 8: continue
 
-                        if self.box_labels_size > 0:
-                            txt = self.ax.text(p[:,0].min(),p[:,1].min(),name+':'+str(box['id']),color='w',fontweight='bold', fontsize=self.box_labels_size, clip_on=True)
-                            txt.set_path_effects([PathEffects.withStroke(linewidth=1, foreground='k')])
+                faces = [[0,1,3,2],[0,1,5,4],[0,2,6,4],[7,3,1,5],[7,5,4,6],[7,6,2,3]]
+                for face in faces:
+                    poly = np.vstack([p[face[0]],p[face[1]],p[face[2]],p[face[3]],p[face[0]]])
+                    poly_collection.append(poly)
+                    color_collection.append(color)
 
-                    alpha = 0.05
-                    facecolors = [list(c)+[alpha] for c in color_collection]
-                    poly_collection = PolyCollection(poly_collection, linewidths=0.5, edgecolors=color_collection, facecolors=facecolors)
-                    self.ax.add_collection(poly_collection)
+                if self.box_labels_size > 0:
+                    text_label = category_name
+                    if id: text_label += f" {id}"
+                    if confidence: text_label += f" ({int(confidence*100)}%)"
+                    txt = self.ax.text(p[:,0].min(),p[:,1].min(), text_label, color='w', fontweight='bold', fontsize=self.box_labels_size, clip_on=True)
+                    txt.set_path_effects([PathEffects.withStroke(linewidth=1, foreground='k')])
 
+            alpha = 0.05
+            facecolors = [list(c)+[alpha] for c in color_collection]
+            poly_collection = PolyCollection(poly_collection, linewidths=0.5, edgecolors=color_collection, facecolors=facecolors)
+            self.ax.add_collection(poly_collection)
 
 
     def __update_lanes(self, sample, image):
@@ -466,8 +459,6 @@ class ImagerWindow(Window, RecordableInterface):
         self.box_3d_colors         =        controls.box3DColors
         self.log_scale             = bool(  controls.logScale)
         self.is_recording          = bool(  controls.video)
-        self.show_IoU              = bool(  controls.showIoU)
-        self.ref_ds_IoU            = str(   controls.refdsIoU)
         self.category_filter       = str(   controls.categoryFilter)
         self.aspect_ratio          = float( controls.aspectRatio)
         self.crops                 =       [controls.cropLeft, 

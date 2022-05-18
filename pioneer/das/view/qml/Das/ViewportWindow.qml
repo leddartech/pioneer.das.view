@@ -55,8 +55,6 @@ DatasourceWindow {
             }
             return m;
         }
-        showIntervals: component.dsName.includes('_ech')
-        showVoxelMapSettings: component.dsName.includes('_xyzit-voxmap')
         worldCheckBoxVisible: true
         hasReferential: viewport_.allActors
         onWorldChanged: timer_.start()
@@ -186,7 +184,7 @@ DatasourceWindow {
             Actors {
                 instanciator: Instantiator {
                     id: pclInstanciator_
-                    model: component.viewports.filter(function(ds){return ds.includes("_ech") || ds.includes("_xyzit") || ds.includes("_xyzvcfar") || ds.includes("_xyzvi");});
+                    model: component.viewports.filter(function(ds){return ds.includes("_ech") || ds.includes("_xyzit") || ds.includes("_xyzvcfar") || ds.includes("_xyzvi") || ds.includes("_pcloud");});
                     
                     delegate: LidarActor {
                         id: actor_
@@ -196,11 +194,10 @@ DatasourceWindow {
                         referential: controls_.world ? 'world' : component.sensorName
                         sensorColor: controls_.dsColors[modelData]
                         colorMap: controls_.useColors ? '' : 'viridis'
-                        method: modelData.includes("_ech") ? 'quad_cloud' : 'point_cloud'
+                        method: modelData.includes("_ech") ? 'quad_cloud' : 'get_point_cloud'
                         undistort: controls_.undistort
                         pointSize: controls_.pointSize
                         amplitudeRatio: controls_.amplitudeRatio
-                        amplitudeType: controls_.amplitudeType
                         logScale: controls_.logScale
                         useRGB: modelData.includes("-rgb") // This is dirty. The way the point clouds are colored should be refactored at some point.
 

@@ -16,9 +16,6 @@ ColumnLayout {
     property var seg3D: []
     property var lanes: []
 
-    property alias showIntervals        : intervals_.visible
-    property alias distIntervals        : distIntervals_.defaultCursors;
-    property alias ampIntervals         : ampIntervals_.defaultCursors;
     property alias undistort            : undistort_.checked
     property alias undistortimage       : undistortimage_.checked
     property alias world                : world_.checked
@@ -31,8 +28,6 @@ ColumnLayout {
     property alias amplitudeRatio       : amplRatio_.value
     property alias confThreshold        : confThreshold_.value
     property alias video                : video_.checked
-    property alias showIoU              : showIoU_.checked
-    property alias refdsIoU             : refdsIoU_.text
     property alias categoryFilter       : categoryFilter_.text
     property alias showImageSettings    : image_settings_.visible
     property alias aspectRatio          : aspectRatio_.value
@@ -40,14 +35,6 @@ ColumnLayout {
     property alias cropRight            : cropRight_.text
     property alias cropTop              : cropTop_.text
     property alias cropBottom           : cropBottom_.text
-    property alias showVoxelMapSettings : voxelMapSettings_.visible
-    property alias voxelMapMemory       : voxelMapMemory_.text
-    property alias voxelMapSkip         : voxelMapSkip_.text
-    property alias submitVoxelMapMemory : submitVoxelMapMemory_
-    property alias voxelSize            : voxelSize_.value
-    property alias voxelSizeText        : voxelSizeText_.text
-    property alias amplitudeType        : amplitudeType_.currentText
-    property alias amplitudeTypeVisible  : amplitudeType_.visible
 
     property var showActor  : Utils.makeVisibilityDict(component.viewports)
     property var showBBox2D : Utils.makeVisibilityDict(component.bboxes2D)
@@ -218,83 +205,6 @@ ColumnLayout {
                     to: 100
                     Layout.preferredWidth: 150
                 }
-                Text {
-                    visible: amplitudeTypeVisible
-                    Layout.alignment: Qt.AlignRight
-                    text: "radar ampl type: "
-                    font.pointSize: 8
-                }
-                ComboBox {
-                    id: amplitudeType_
-                    model: ["cfar_snr", "cfar_noise", "velocity"]
-                }
-                
-                RowLayout {
-                    id: intervals_
-                    visible: false //default value
-                    Layout.preferredHeight: 15
-                    Text {
-                        text: "dist intervals"
-                        font.pointSize: 8
-                        Layout.preferredHeight: 15
-                    }
-                    IntervalsEditor {
-                        id: distIntervals_
-                        // Layout.fillWidth: true
-                        font.pointSize: 8
-                        Layout.preferredHeight: 25
-                    }
-                    Text {
-                        text: "amp intervals"
-                        font.pointSize: 8
-                        Layout.preferredHeight: 15
-                    }
-                    IntervalsEditor {
-                        id: ampIntervals_
-                        // Layout.fillWidth: true
-                        font.pointSize: 8
-                        Layout.preferredHeight: 25
-                    }
-                }
-            }
-
-            RowLayout {
-                id: voxelMapSettings_
-                Layout.maximumHeight: 25
-                visible: false
-                Text {text: 'Voxel map: nb frames'}
-                TextField {
-                    id: voxelMapMemory_
-                    text: '5'
-                    Layout.preferredWidth: 60
-                    Layout.preferredHeight: 25
-                }
-                Text {text: 'skip'}
-                TextField {
-                    id: voxelMapSkip_
-                    text: '1'
-                    Layout.preferredWidth: 60
-                    Layout.preferredHeight: 25
-                }
-                Button {
-                    id: submitVoxelMapMemory_
-                    text: "submit"
-                    Layout.preferredHeight: 25
-                    Layout.preferredWidth: 70
-                }
-                Text {text: 'voxel size: '}
-                Text {
-                    id: voxelSizeText_
-                    text: '0.00'
-                }
-                Slider {
-                    id: voxelSize_
-                    Layout.alignment: Qt.AlignRight
-                    from: -2
-                    value: -2
-                    to: 0
-                    Layout.preferredWidth: 150
-                }
             }
 
             RowLayout {
@@ -367,18 +277,6 @@ ColumnLayout {
                         to: 20
                         Layout.preferredHeight: 30
                     }
-                }
-                SmallCheckBox {
-                    id: showIoU_
-                    Layout.alignment: Qt.AlignRight
-                    text: "compute IoU with"
-                    checked: false
-                }
-                TextField {
-                    id: refdsIoU_
-                    placeholderText: "lca2_bfrl_box3d-deepen"
-                    text: ""
-                    Layout.preferredHeight: 30
                 }
                 TextField {
                     id: categoryFilter_
