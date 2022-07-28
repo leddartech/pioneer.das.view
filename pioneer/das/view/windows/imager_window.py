@@ -82,7 +82,7 @@ class ImagerWindow(Window, RecordableInterface):
         sample:Image = self.platform[self.datasource][cursor]
         image = sample.get_image(undistort = self.undistortimage)
 
-        self.__update_actors(sample, image)
+        self.__update_actors(sample)
         self.__update_box2D(sample, image)
         self.__update_seg_2d(sample, image)
         self.__update_bbox_3d(sample)
@@ -124,7 +124,7 @@ class ImagerWindow(Window, RecordableInterface):
             points_mask = np.all(points_mask[indices], axis=1)
         return indices[points_mask]
 
-    def __update_actors(self, sample, image):
+    def __update_actors(self, sample:Image):
         datasources = [ds_name for ds_name, show in dict(self.show_actor, **dict(self.show_seg_3d)).items() if show]
 
         all_points2D = dict()
@@ -222,11 +222,6 @@ class ImagerWindow(Window, RecordableInterface):
                 self.ax.figure.canvas.draw()
             else:
                 self.scatter = self.ax.scatter(points2d[:, 0], points2d[:, 1], s=self.point_size, c=colors)
-
-        # try: #remove all previous 2D and 3D boxes
-        [p.remove() for p in reversed(self.ax.collections)]
-        [p.remove() for p in reversed(self.ax.patches)]
-        [p.remove() for p in reversed(self.ax.texts)]
 
 
     def __update_box2D(self, sample, image):
@@ -388,6 +383,7 @@ class ImagerWindow(Window, RecordableInterface):
         #TODO: Extract to function
                 # if using colors, set_array does not work, it expects a 1D array, probably indexing an hidden color map
                 # so we better throw away existing scatter and start over...
+        [p.remove() for p in reversed(self.ax.texts)]
         if self.scatter is not None:
             self.scatter.set_offsets(np.empty((0,2), 'f4'))
             self.scatter.set_array(np.empty((0,), 'f4'))
